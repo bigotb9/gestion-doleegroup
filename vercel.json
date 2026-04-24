@@ -2,8 +2,5 @@
   "buildCommand": "prisma generate && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["cdg1"],
-  "env": {
-    "DIRECT_URL": "@direct_url"
-  }
+  "regions": ["cdg1"]
 }
