@@ -12,11 +12,16 @@ import { SignOutButton } from "./SignOutButton"
 import { toast } from "sonner"
 
 export default function ProfilPage() {
-  const { data: session, update } = useSession()
+  const { data: session, status, update } = useSession()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [localAvatar, setLocalAvatar] = useState<string | null>(null)
 
+  if (status === "loading") return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin" />
+    </div>
+  )
   if (!session?.user) return null
 
   const { name, email, role, image } = session.user
