@@ -21,6 +21,10 @@ const syne = Syne({
 export const metadata: Metadata = {
   title: "Dolee Group | Gestion commerciale",
   description: "Plateforme de gestion commerciale Dolee Group",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
