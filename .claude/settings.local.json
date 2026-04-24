@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
+      "Bash(taskkill /PID 17448 /F)",
+      "Bash(cmd /c \"taskkill /F /IM node.exe\")",
+      "Bash(cmd /c \"taskkill /PID 24952 /F\")",
+      "Bash(powershell -Command \"Stop-Process -Id 24952 -Force\")",
+      "Bash(rm \"c:/Users/bigot/Documents/dolee-group/lib/indy-client.ts\")",
+      "Bash(rm \"c:/Users/bigot/Documents/dolee-group/app/api/facturation/[id]/sync-indy/route.ts\")",
+      "Bash(rm -rf \"c:/Users/bigot/Documents/dolee-group/app/api/facturation/indy\")",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\app\\\\\\\\\\(app\\)\" -maxdepth 1 -type d)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\app\\\\\\\\\\(app\\)\\\\\\\\dashboard\" -type f)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\" -name \"*upload*\" -type f)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\" -path \"*/public/uploads\" -type d)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\app\\\\\\\\api\" -name \"*upload*\" -o -name \"*file*\")",
+      "Bash(ls -la \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\public\\\\\\\\uploads\")",
+      "Bash(ls -la \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\public\\\\\\\\uploads\\\\\\\\avatars\")",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\public\" -type d)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\app\\\\\\\\\\(app\\)\" -type f -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(grep -r \"public/uploads\\\\|/uploads/\" \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\\\\\\\\app\" --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\bigot\\\\\\\\Documents\\\\\\\\dolee-group\" -name \"next.config.*\" -o -name \"tsconfig.json\")",
+      "Bash(npm list *)",
+      "Bash(node -e ' *)",
+      "Bash(grep -l \"params.*Promise\" /c/Users/bigot/Documents/dolee-group/app/api/*/*/route.ts)",
+      "Bash(grep -L \"await params\" /c/Users/bigot/Documents/dolee-group/app/api/*/*/route.ts)",
+      "Bash(grep -E \"\\\\.ts$|^d\")",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({recharts: p.dependencies?.recharts, xlsx: p.dependencies?.xlsx}, null, 2\\)\\)\")",
+      "Bash(npx next *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\depenses",
+      "C:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\transitaires",
+      "C:\\Users\\bigot\\Documents\\dolee-group\\app\\(app)\\transitaires\\[id]",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\facturation\\[id]",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\fiches-cout",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\(app)\\fiches-cout",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\reconditionnement\\[id]",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\commandes\\[id]"
+    ]
+  }
+}

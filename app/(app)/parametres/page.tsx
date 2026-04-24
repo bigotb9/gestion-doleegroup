@@ -5,7 +5,7 @@ import { getExchangeRates } from "@/lib/exchange-rates"
 import { prisma } from "@/lib/prisma"
 import { Role } from "@prisma/client"
 import {
-  Users, Package, ArrowRight, TrendingUp, Shield, Briefcase,
+  Users, ArrowRight, TrendingUp, Shield, Briefcase,
   Factory, Banknote, Activity, Lock,
 } from "lucide-react"
 
@@ -21,13 +21,12 @@ export default async function ParametresPage() {
   const usdCfa = rates.USD_CFA?.toLocaleString("fr-FR", { maximumFractionDigits: 2 }) ?? "600"
 
   // Stats rapides
-  const [usersCount, activeUsersCount, produitsCount] = isManager
+  const [usersCount, activeUsersCount] = isManager
     ? await Promise.all([
         prisma.user.count(),
         prisma.user.count({ where: { isActive: true } }),
-        prisma.produit.count({ where: { isActive: true } }),
       ])
-    : [0, 0, 0]
+    : [0, 0]
 
   return (
     <div className="space-y-6">
@@ -65,29 +64,6 @@ export default async function ParametresPage() {
                       <span className="h-1.5 w-1.5 rounded-full bg-green-500" />{activeUsersCount} actifs
                     </span>
                     <span className="text-slate-400">sur {usersCount}</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            {/* Catalogue */}
-            <Link href="/parametres/produits" className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-8px_rgba(16,185,129,0.2)] hover:border-emerald-200">
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{ background: "radial-gradient(80% 100% at 100% 0%, rgba(16,185,129,0.12) 0%, transparent 60%)" }} />
-              <div className="relative flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <Package className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">Catalogue produits</h3>
-                    <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">Références et prix de vente</p>
-                  <div className="mt-3 text-xs">
-                    <span className="inline-flex items-center gap-1 font-semibold text-slate-900">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{produitsCount} produits actifs
-                    </span>
                   </div>
                 </div>
               </div>

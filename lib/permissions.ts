@@ -17,7 +17,6 @@ export type Action =
   | "depense:read" | "depense:manage"
   // Administration
   | "users:manage"
-  | "produits:manage"
   | "audit:read"
 
 export const ALL_ACTIONS: Action[] = [
@@ -33,7 +32,6 @@ export const ALL_ACTIONS: Action[] = [
   "facturation:read", "facturation:manage",
   "depense:read", "depense:manage",
   "users:manage",
-  "produits:manage",
   "audit:read",
 ]
 
@@ -167,7 +165,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
     id: "administration",
     label: "Administration",
-    description: "Utilisateurs, catalogue, audit",
+    description: "Utilisateurs et audit",
     color: "amber",
     icon: "Shield",
     groups: [
@@ -175,12 +173,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
         label: "Utilisateurs", module: "users",
         actions: [
           { action: "users:manage", label: "Gérer les utilisateurs", hint: "Créer, modifier, désactiver" },
-        ],
-      },
-      {
-        label: "Catalogue produits", module: "produits",
-        actions: [
-          { action: "produits:manage", label: "Gérer le catalogue" },
         ],
       },
       {
@@ -211,7 +203,6 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "livraison:read",
     "facturation:read",
     "depense:read",
-    "produits:manage",
   ],
   CHARGE_OPERATIONS: [
     "crm:read",

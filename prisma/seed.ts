@@ -154,62 +154,6 @@ async function main() {
   }
 
   // ============================================================
-  // PRODUITS CATALOGUE
-  // ============================================================
-  console.log("\n  Produits catalogue...")
-  const produits = [
-    {
-      reference: "STY-BIC-001",
-      nom: "Stylo bille personnalisé",
-      description: "Stylo bille élégant avec gravure laser ou sérigraphie du logo. Encre bleue ou noire.",
-      categorie: "Stylos & Écriture",
-      prixUnitaireCFA: 850,
-      isActive: true,
-    },
-    {
-      reference: "MUG-CER-001",
-      nom: "Mug céramique personnalisé",
-      description: "Mug en céramique 330ml avec impression numérique haute définition du logo.",
-      categorie: "Mugs & Tasses",
-      prixUnitaireCFA: 3500,
-      isActive: true,
-    },
-    {
-      reference: "TEE-COT-001",
-      nom: "Tee-shirt personnalisé",
-      description: "Tee-shirt 100% coton 180g/m². Sérigraphie ou broderie du logo.",
-      categorie: "Textile",
-      prixUnitaireCFA: 7500,
-      isActive: true,
-    },
-    {
-      reference: "USB-16G-001",
-      nom: "Clé USB 16 Go personnalisée",
-      description: "Clé USB 16 Go avec boîtier plastique ou métal gravé. USB 3.0.",
-      categorie: "High-Tech",
-      prixUnitaireCFA: 6500,
-      isActive: true,
-    },
-    {
-      reference: "CAR-A5-001",
-      nom: "Carnet A5 couverture rigide",
-      description: "Carnet A5 couverture rigide personnalisée (sérigraphie). 192 pages lignées.",
-      categorie: "Papeterie",
-      prixUnitaireCFA: 4200,
-      isActive: true,
-    },
-  ]
-
-  for (const p of produits) {
-    await prisma.produit.upsert({
-      where: { reference: p.reference },
-      update: p,
-      create: p,
-    })
-    console.log(`    Produit: ${p.reference}`)
-  }
-
-  // ============================================================
   // ARTICLES STOCK
   // ============================================================
   console.log("\n  Articles stock...")

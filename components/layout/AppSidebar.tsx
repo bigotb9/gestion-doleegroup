@@ -59,7 +59,6 @@ const NAV_ITEMS: NavItem[] = [
 const SETTINGS_ITEMS: NavItem[] = [
   { label: "Paramètres", href: "/parametres", icon: Settings },
   { label: "Utilisateurs", href: "/parametres/utilisateurs", icon: Users, action: "users:manage" },
-  { label: "Catalogue produits", href: "/parametres/produits", icon: Package, action: "produits:manage" },
   { label: "Journal d'audit", href: "/parametres/audit", icon: ShieldCheck, action: "users:manage" },
 ]
 
