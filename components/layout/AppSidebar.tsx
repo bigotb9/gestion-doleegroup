@@ -139,18 +139,20 @@ export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
 
       {/* Brand / Logo */}
       <div
-        className="relative flex items-center justify-between px-4 py-4 border-b"
+        className="relative flex items-center gap-2 px-3 py-2 border-b"
         style={{ borderColor: "#1e1e8a" }}
       >
-        <img
-          src="/logo.png"
-          alt="Dolee Group"
-          style={{ height: "36px", width: "auto", display: "block", mixBlendMode: "screen" }}
-        />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <img
+            src="/logo.png"
+            alt="Dolee Group"
+            style={{ width: "100%", height: "auto", display: "block", mixBlendMode: "screen", maxHeight: "90px", objectFit: "contain" }}
+          />
+        </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="md:hidden p-1 rounded-lg text-blue-200/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="shrink-0 md:hidden p-1 rounded-lg text-blue-200/60 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Fermer le menu"
           >
             <X className="h-5 w-5" />

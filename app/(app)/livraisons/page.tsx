@@ -88,11 +88,11 @@ export default function LivraisonsPage() {
   const [planifierOpen, setPlanifierOpen] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSelectOption[]>([])
   const [chargesOps, setChargesOps] = useState<UserOption[]>([])
-  const [formCommandeId, setFormCommandeId] = useState("")
+  const [formCommandeId, setFormCommandeId] = useState<string | null>(null)
   const [formAdresse, setFormAdresse] = useState("")
   const [formContact, setFormContact] = useState("")
   const [formDatePrevue, setFormDatePrevue] = useState("")
-  const [formAssignedTo, setFormAssignedTo] = useState("")
+  const [formAssignedTo, setFormAssignedTo] = useState<string | null>(null)
   const [formNotes, setFormNotes] = useState("")
   const [formNbSignatures, setFormNbSignatures] = useState<1 | 2>(1)
   const [formSubmitting, setFormSubmitting] = useState(false)
@@ -181,11 +181,11 @@ export default function LivraisonsPage() {
       }
       toast.success("Livraison planifiée")
       setPlanifierOpen(false)
-      setFormCommandeId("")
+      setFormCommandeId(null)
       setFormAdresse("")
       setFormContact("")
       setFormDatePrevue("")
-      setFormAssignedTo("")
+      setFormAssignedTo(null)
       setFormNotes("")
       setFormNbSignatures(1)
       fetchLivraisons()
@@ -204,6 +204,7 @@ export default function LivraisonsPage() {
       >
         <RoleGate roles={["MANAGER", "SECRETAIRE"]}>
           <Dialog
+            modal={false}
             open={planifierOpen}
             onOpenChange={(open) => {
               setPlanifierOpen(open)
@@ -225,7 +226,7 @@ export default function LivraisonsPage() {
                   </Label>
                   <Select
                     value={formCommandeId}
-                    onValueChange={(v) => setFormCommandeId(v ?? "")}
+                    onValueChange={(v) => setFormCommandeId(v)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une commande" />
@@ -274,7 +275,7 @@ export default function LivraisonsPage() {
                   <Label>Assigné à</Label>
                   <Select
                     value={formAssignedTo}
-                    onValueChange={(v) => setFormAssignedTo(v ?? "")}
+                    onValueChange={(v) => setFormAssignedTo(v)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Choisir un chargé des opérations" />

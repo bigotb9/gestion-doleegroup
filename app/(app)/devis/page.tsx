@@ -42,6 +42,7 @@ const TABS: { label: string; value: TabFilter }[] = [
   { label: "À valider", value: "EN_ATTENTE_VALIDATION" },
   { label: "Envoyés", value: "ENVOYE" },
   { label: "Acceptés", value: "ACCEPTE" },
+  { label: "Refusés", value: "REFUSE" },
 ]
 
 export default function DevisPage() {

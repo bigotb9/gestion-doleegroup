@@ -78,11 +78,10 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
-            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 44, height: 44 }} />}
-            <View style={{ marginTop: 2 }}>
-              <Text style={[styles.companyName, { fontSize: 13 }]}>DOLEE GROUP SARL</Text>
-              <Text style={[styles.companyTagline, { marginTop: 2 }]}>09 BP 2782 ABIDJAN 09</Text>
+          <View style={{ flexDirection: "column", alignItems: "flex-start" }}>
+            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 90, height: 90 }} />}
+            <View style={{ marginTop: 6 }}>
+              <Text style={[styles.companyTagline, { marginTop: 2 }]}>info@doleegroup.com</Text>
               <Text style={styles.companyTagline}>Cocody Angré 8e Tranche</Text>
               <Text style={styles.companyTagline}>RCCM : CI-ABJ-2019-B-20941</Text>
               <Text style={styles.companyTagline}>N°CC : 1961890 X</Text>
@@ -252,7 +251,7 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>DOLEE GROUP SARL — 09 BP 2782 Abidjan 09</Text>
+          <Text style={styles.footerText}>info@doleegroup.com</Text>
           <Text style={styles.footerText}>{devis.numero} — {fmtDate(devis.dateEmission)}</Text>
           <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber}/${totalPages}`} />
         </View>

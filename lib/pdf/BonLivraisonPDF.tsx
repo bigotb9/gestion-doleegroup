@@ -82,7 +82,7 @@ export function BonLivraisonPDF({
         {/* Header */}
         <View style={styles.header}>
           <View>
-            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 44, height: 44 }} />}
+            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 80, height: 80 }} />}
           </View>
           <View>
             <Text style={styles.docTitle}>BON DE LIVRAISON</Text>

@@ -256,7 +256,7 @@ export function RecuCaissePDF({ recu, logoDataUrl }: { recu: RecuCaisseData; log
         {/* Header */}
         <View style={styles.header}>
           <View>
-            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 44, height: 44, marginBottom: 6 }} />}
+            {logoDataUrl && <Image src={logoDataUrl} style={{ width: 80, height: 80, marginBottom: 6 }} />}
             <Text style={styles.companyName}>Dolee Group</Text>
             <Text style={styles.companyTagline}>Gestion commerciale</Text>
           </View>

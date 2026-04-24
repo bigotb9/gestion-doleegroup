@@ -47,7 +47,7 @@ export function BonCommandePDF({
         <View style={styles.header}>
           <View>
             {logoDataUrl && (
-              <Image src={logoDataUrl} style={{ width: 44, height: 44 }} />
+              <Image src={logoDataUrl} style={{ width: 80, height: 80 }} />
             )}
           </View>
           <View>
