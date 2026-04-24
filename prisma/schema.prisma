@@ -1,0 +1,790 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  MANAGER
+  SECRETAIRE
+  CHARGE_OPERATIONS
+}
+
+enum ProspectStatus {
+  PROSPECT
+  CONTACTE
+  DEVIS_ENVOYE
+  NEGOCIATION
+  CLIENT
+  PERDU
+}
+
+enum DevisStatus {
+  BROUILLON
+  EN_ATTENTE_VALIDATION
+  VALIDE
+  ENVOYE
+  ACCEPTE
+  REFUSE
+  EXPIRE
+}
+
+enum CommandeStatus {
+  EN_ATTENTE_CONFIRMATION
+  CONFIRMEE
+  EN_PRODUCTION
+  EN_LOGISTIQUE
+  EN_RECONDITIONNEMENT
+  PRETE_LIVRAISON
+  LIVREE
+  ANNULEE
+}
+
+enum PaymentMode {
+  AVANCE_SOLDE
+  BON_DE_COMMANDE
+}
+
+enum PaymentStatus {
+  EN_ATTENTE
+  AVANCE_RECUE
+  SOLDE_RECU
+  PAIEMENT_COMPLET
+  EN_RETARD
+}
+
+enum Currency {
+  EUR
+  USD
+  CFA
+}
+
+enum LogistiqueStatus {
+  CHEZ_FOURNISSEUR
+  EXPEDIE_TRANSITAIRE
+  EN_DEDOUANEMENT
+  CHEZ_TRANSITAIRE
+  EN_TRANSIT_BUREAU
+  AU_BUREAU
+}
+
+enum ReconditionnementStatus {
+  EN_ATTENTE
+  EN_COURS
+  TERMINE
+}
+
+enum LivraisonStatus {
+  PLANIFIEE
+  EN_COURS
+  LIVREE
+  ECHEC
+}
+
+enum StockMouvementType {
+  ENTREE
+  SORTIE
+}
+
+// ============================================================
+// USERS / AUTH
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String
+  role          Role
+  avatarUrl     String?
+  isActive      Boolean   @default(true)
+  permissions   String?   // JSON array of Action strings; null = use role defaults
+  supabaseUid   String?   @unique // UUID du compte Supabase Auth correspondant
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions           Session[]
+  accounts           Account[]
+  devisCreated       Devis[]        @relation("DevisCreatedBy")
+  devisValidated     Devis[]        @relation("DevisValidatedBy")
+  commandesConfirmed Commande[]     @relation("CommandeConfirmedBy")
+  paymentsConfirmed  Paiement[]     @relation("PaiementConfirmedBy")
+  livraisonsAssigned Livraison[]    @relation("LivraisonAssignedTo")
+  notes              Note[]
+  notifications      Notification[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// CRM
+// ============================================================
+
+model Client {
+  id              String         @id @default(cuid())
+  status          ProspectStatus @default(PROSPECT)
+  raisonSociale   String
+  secteurActivite String?
+  siteWeb         String?
+  contactNom      String
+  contactPrenom   String?
+  contactPoste    String?
+  contactEmail    String?
+  contactPhone    String
+  contactPhone2   String?
+  adresse         String?
+  ville           String?
+  pays            String         @default("Côte d'Ivoire")
+  ncc             String?        // Numéro de Compte Contribuable
+  sourceProspect  String?
+  priorite        Int            @default(2)
+  dateConversion  DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  devis      Devis[]
+  commandes  Commande[]
+  notes      Note[]
+  relances   Relance[]
+  livraisons Livraison[]
+  contacts   Contact[]
+
+  @@index([status])
+  @@index([raisonSociale])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  clientId  String
+  nom       String
+  prenom    String?
+  poste     String?
+  email     String?
+  phone     String
+  phone2    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  devis  Devis[]
+
+  @@index([clientId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  clientId  String
+  userId    String
+  contenu   String   @db.Text
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Relance {
+  id          String    @id @default(cuid())
+  clientId    String
+  dateRelance DateTime
+  objet       String
+  notes       String?   @db.Text
+  estFaite    Boolean   @default(false)
+  dateFaite   DateTime?
+  createdAt   DateTime  @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// PRODUITS (Catalogue)
+// ============================================================
+
+model Produit {
+  id              String   @id @default(cuid())
+  reference       String   @unique
+  nom             String
+  description     String?  @db.Text
+  categorie       String?
+  imageUrl        String?
+  prixUnitaireCFA Decimal  @db.Decimal(12, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  devisLignes DevisLigne[]
+}
+
+// ============================================================
+// DEVIS (QUOTES)
+// ============================================================
+
+model Devis {
+  id                 String      @id @default(cuid())
+  numero             String      @unique
+  clientId           String
+  createdById        String
+  validatedById      String?
+  status             DevisStatus @default(BROUILLON)
+  dateEmission       DateTime    @default(now())
+  dateValidite       DateTime
+  dateValidation     DateTime?
+  sousTotal          Decimal     @db.Decimal(14, 2)
+  taxe               Decimal     @db.Decimal(14, 2) @default(0)
+  total              Decimal     @db.Decimal(14, 2)
+  devise             Currency    @default(CFA)
+  contactId          String?
+  projet             String?
+  notes              String?     @db.Text
+  conditionsPaiement String?     @db.Text
+  delaiLivraison     String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  lignes     DevisLigne[]
+  commandes  Commande[]
+  client     Client   @relation(fields: [clientId], references: [id])
+  contact    Contact? @relation(fields: [contactId], references: [id])
+  createdBy   User   @relation("DevisCreatedBy", fields: [createdById], references: [id])
+  validatedBy User?  @relation("DevisValidatedBy", fields: [validatedById], references: [id])
+
+  @@index([clientId])
+  @@index([status])
+  @@index([numero])
+}
+
+model DevisLigne {
+  id           String   @id @default(cuid())
+  devisId      String
+  produitId    String?
+  designation  String
+  description  String?
+  quantite     Int
+  prixUnitaire Decimal  @db.Decimal(12, 2)
+  remise       Decimal  @db.Decimal(5, 2) @default(0)
+  remiseFixe   Decimal  @db.Decimal(12, 2) @default(0)
+  total        Decimal  @db.Decimal(14, 2)
+  ordre        Int      @default(0)
+
+  devis   Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  produit Produit? @relation(fields: [produitId], references: [id])
+}
+
+// ============================================================
+// FOURNISSEURS (SUPPLIERS)
+// ============================================================
+
+model Transitaire {
+  id           String   @id @default(cuid())
+  nom          String
+  pays         String
+  contactNom   String?
+  contactEmail String?
+  contactPhone String?
+  notes        String?  @db.Text
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  logistiques Logistique[]
+}
+
+model Fournisseur {
+  id                   String   @id @default(cuid())
+  nom                  String
+  pays                 String
+  contactNom           String?
+  contactEmail         String?
+  contactPhone         String?
+  devisePreferee       Currency @default(EUR)
+  delaiProduction      Int      @default(30)
+  notes                String?  @db.Text
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  productions Production[]
+}
+
+// ============================================================
+// COMMANDES (ORDERS)
+// ============================================================
+
+model Commande {
+  id                     String         @id @default(cuid())
+  numero                 String         @unique
+  clientId               String
+  devisId                String?
+  confirmedById          String?
+  status                 CommandeStatus @default(EN_ATTENTE_CONFIRMATION)
+  modePaiement           PaymentMode
+  statusPaiement         PaymentStatus  @default(EN_ATTENTE)
+  montantTotal           Decimal        @db.Decimal(14, 2)
+  montantAvance          Decimal?       @db.Decimal(14, 2)
+  montantSolde           Decimal?       @db.Decimal(14, 2)
+  devise                 Currency       @default(CFA)
+  dateCommande           DateTime       @default(now())
+  dateLivraisonSouhaitee DateTime?
+  dateLivraisonPrevue    DateTime?
+  notes                  String?        @db.Text
+  bonDeCommande          String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  lignes            CommandeLigne[]
+  paiements         Paiement[]
+  productions       Production[]
+  logistiques       Logistique[]
+  reconditionnements Reconditionnement[]
+  livraisons        Livraison[]
+  factures          Facture[]
+  stockMouvements   StockMouvement[]
+  photos            CommandePhoto[]
+  receptions        ReceptionStock[]
+
+  client      Client   @relation(fields: [clientId], references: [id])
+  devis       Devis?   @relation(fields: [devisId], references: [id])
+  confirmedBy User?    @relation("CommandeConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@index([clientId])
+  @@index([status])
+  @@index([numero])
+}
+
+model CommandeLigne {
+  id                String   @id @default(cuid())
+  commandeId        String
+  designation       String
+  description       String?
+  quantite          Int
+  prixUnitaire      Decimal  @db.Decimal(12, 2)
+  remise            Decimal  @db.Decimal(5, 2)  @default(0)
+  total             Decimal  @db.Decimal(14, 2)
+  ordre             Int      @default(0)
+  // Coûts internes par unité (optionnel)
+  coutAchat         Decimal? @db.Decimal(14, 2)
+  fraisDedouanement Decimal? @db.Decimal(14, 2)
+  fraisTransport    Decimal? @db.Decimal(14, 2)
+
+  commande Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+}
+
+model Paiement {
+  id               String    @id @default(cuid())
+  commandeId       String
+  confirmedById    String?
+  type             String
+  montant          Decimal   @db.Decimal(14, 2)
+  dateReception    DateTime
+  modePaiement     String
+  reference        String?
+  isConfirmed      Boolean   @default(false)
+  dateConfirmation DateTime?
+  justificatifUrl  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  commande    Commande @relation(fields: [commandeId], references: [id])
+  confirmedBy User?    @relation("PaiementConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@index([commandeId])
+}
+
+// ============================================================
+// PRODUCTION
+// ============================================================
+
+model Production {
+  id                        String    @id @default(cuid())
+  commandeId                String
+  fournisseurId             String
+  designation               String?
+  devise                    Currency
+  coutUnitaire              Decimal   @db.Decimal(12, 4)
+  quantite                  Int
+  coutTotal                 Decimal   @db.Decimal(14, 4)
+  tauxChange                Decimal?  @db.Decimal(12, 6)
+  coutTotalCFA              Decimal?  @db.Decimal(14, 2)
+  dateCommandeFournisseur   DateTime?
+  dateDebutProduction       DateTime?
+  dateFinProductionPrevue   DateTime?
+  dateFinProductionReelle   DateTime?
+  delaiProduction           Int?
+  notesFournisseur          String?   @db.Text
+  numeroBCF                 String?   @unique
+  bonCommandeFournisseurUrl String?
+  proformaUrl               String?
+  proformaMontantCFA        Decimal?  @db.Decimal(14, 2)
+  status                    String    @default("EN_ATTENTE")
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  commande             Commande              @relation(fields: [commandeId], references: [id])
+  fournisseur          Fournisseur           @relation(fields: [fournisseurId], references: [id])
+  paiementsFournisseur PaiementFournisseur[]
+
+  @@index([commandeId])
+}
+
+model PaiementFournisseur {
+  id                String   @id @default(cuid())
+  productionId      String
+  montant           Decimal  @db.Decimal(14, 2)
+  datePaiement      DateTime
+  preuvePaiementUrl String?
+  notes             String?  @db.Text
+  depenseId         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  production Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+
+  @@index([productionId])
+}
+
+// ============================================================
+// LOGISTIQUE
+// ============================================================
+
+model Logistique {
+  id                        String           @id @default(cuid())
+  commandeId                String
+  label                     String?
+  status                    LogistiqueStatus @default(CHEZ_FOURNISSEUR)
+  transitaireId             String?
+  transitaireNom            String?
+  transitaireContact        String?
+  dateExpeditionFournisseur DateTime?
+  dateArriveeTransitaire    DateTime?
+  dateDebutDedouanement     DateTime?
+  dateFinDedouanement       DateTime?
+  dateDepartTransitaire     DateTime?
+  dateArriveeEntrepot       DateTime?
+  numeroTracage             String?
+  numeroDeclarationDouane   String?
+  poids                     Decimal?         @db.Decimal(10, 3)
+  prixLogistiqueKg          Decimal?         @db.Decimal(12, 2)
+  fraisLogistiqueCFA        Decimal?         @db.Decimal(14, 2)
+  notes                     String?          @db.Text
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+
+  etapes      LogistiqueEtape[]
+  commande    Commande     @relation(fields: [commandeId], references: [id])
+  transitaire Transitaire? @relation(fields: [transitaireId], references: [id])
+}
+
+model LogistiqueEtape {
+  id           String    @id @default(cuid())
+  logistiqueId String
+  etape        String
+  datePrevue   DateTime?
+  dateReelle   DateTime?
+  estFait      Boolean   @default(false)
+  notes        String?
+  ordre        Int
+
+  logistique Logistique @relation(fields: [logistiqueId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// RECEPTION STOCK (suivi par commande)
+// ============================================================
+
+model ReceptionStock {
+  id                String    @id @default(cuid())
+  commandeId        String
+  designation       String
+  quantiteCommandee      Int
+  quantiteRecue          Int       @default(0)
+  quantiteReconditionnee Int       @default(0)
+  quantiteLivree         Int       @default(0)
+  notes             String?
+  dateReception     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  commande        Commande         @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+  livraisonLignes LivraisonLigne[]
+
+  @@index([commandeId])
+}
+
+// ============================================================
+// STOCK (articles pour reconditionnement)
+// ============================================================
+
+model ArticleStock {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  nom         String
+  description String?
+  unite       String   @default("pièce")
+  quantite     Int      @default(0)
+  quantiteMin  Int      @default(0)
+  surplusStock Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mouvements         StockMouvement[]
+  reconditionnements ReconditionnementArticle[]
+}
+
+model StockMouvement {
+  id            String             @id @default(cuid())
+  articleId     String
+  commandeId    String?
+  type          StockMouvementType
+  quantite      Int
+  quantiteAvant Int
+  quantiteApres Int
+  motif         String?
+  createdAt     DateTime           @default(now())
+
+  article  ArticleStock @relation(fields: [articleId], references: [id])
+  commande Commande?    @relation(fields: [commandeId], references: [id])
+
+  @@index([articleId])
+}
+
+// ============================================================
+// RECONDITIONNEMENT
+// ============================================================
+
+model Reconditionnement {
+  id                  String                  @id @default(cuid())
+  commandeId          String
+  label               String?
+  status              ReconditionnementStatus @default(EN_ATTENTE)
+  dateDebut           DateTime?
+  dateFin             DateTime?
+  typePersonalisation String?
+  instructions        String?                 @db.Text
+  fichierBAT          String?
+  notes               String?                 @db.Text
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  articlesUtilises ReconditionnementArticle[]
+  commande         Commande @relation(fields: [commandeId], references: [id])
+}
+
+model ReconditionnementArticle {
+  id                  String @id @default(cuid())
+  reconditionnementId String
+  articleId           String
+  quantiteUtilisee    Int
+
+  reconditionnement Reconditionnement @relation(fields: [reconditionnementId], references: [id], onDelete: Cascade)
+  article           ArticleStock      @relation(fields: [articleId], references: [id])
+}
+
+// ============================================================
+// LIVRAISONS
+// ============================================================
+
+model Livraison {
+  id               String          @id @default(cuid())
+  commandeId       String
+  clientId         String
+  assignedToId     String?
+  status           LivraisonStatus @default(PLANIFIEE)
+  adresseLivraison String
+  contactLivraison String?
+  datePrevue       DateTime
+  dateReelle       DateTime?
+  nombreSignaturesClient Int             @default(1)
+  signatureUrl           String?
+  signatureDate          DateTime?
+  nomSignataire          String?
+  signatureUrl2          String?
+  nomSignataire2         String?
+  signatureChargeUrl     String?
+  signatureChargeDate    DateTime?
+  nomSignataireCharge    String?
+  notes                  String?         @db.Text
+  bonLivraisonUrl        String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  commande   Commande        @relation(fields: [commandeId], references: [id])
+  client     Client          @relation(fields: [clientId], references: [id])
+  assignedTo User?           @relation("LivraisonAssignedTo", fields: [assignedToId], references: [id])
+  lignes     LivraisonLigne[]
+
+  @@index([commandeId])
+}
+
+model LivraisonLigne {
+  id          String @id @default(cuid())
+  livraisonId String
+  receptionId String
+  designation String
+  quantite    Int
+
+  livraison  Livraison      @relation(fields: [livraisonId], references: [id], onDelete: Cascade)
+  reception  ReceptionStock @relation(fields: [receptionId], references: [id])
+
+  @@index([livraisonId])
+}
+
+// ============================================================
+// FACTURATION
+// ============================================================
+
+model Facture {
+  id           String    @id @default(cuid())
+  commandeId   String
+  type         String    @default("RECU_CAISSE")
+  numero       String    @unique
+  montantHT    Decimal   @db.Decimal(14, 2)
+  montantTVA   Decimal   @db.Decimal(14, 2) @default(0)
+  montantTTC   Decimal   @db.Decimal(14, 2)
+  dateEmission DateTime  @default(now())
+  dateEcheance DateTime?
+  datePaiement DateTime?
+  statut          String    @default("EN_ATTENTE")
+  statutReglement String?
+  fneFileUrl      String?
+  pdfUrl          String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([commandeId])
+}
+
+// ============================================================
+// AUDIT TRAIL
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userEmail String?
+  action    String   // CREATE | UPDATE | DELETE | VALIDATE | CONFIRM | SIGN | EXPORT
+  entity    String   // DEVIS | COMMANDE | PAIEMENT | FACTURE | LIVRAISON | DEPENSE
+  entityId  String
+  entityRef String?  // numéro lisible (26FP04001, 26CMD04002…)
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// PHOTOS PAR COMMANDE
+// ============================================================
+
+model CommandePhoto {
+  id         String   @id @default(cuid())
+  commandeId String
+  url        String
+  caption    String?
+  categorie  String   @default("AUTRE")
+  createdAt  DateTime @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+
+  @@index([commandeId])
+}
+
+// ============================================================
+// FICHES DE COÛT PRODUIT
+// ============================================================
+
+model FicheCoutProduit {
+  id                 String   @id @default(cuid())
+  categorie          String
+  nom                String
+  fournisseur        String
+  contactFournisseur String?
+  coutUnitaire       Decimal  @db.Decimal(14, 2)          // Prix d'achat fournisseur
+  fraisDedouanement  Decimal  @db.Decimal(14, 2) @default(0)
+  coutTotal          Decimal  @db.Decimal(14, 2)          // Prix de revient (achat + dédouanement)
+  prixVente          Decimal? @db.Decimal(14, 2)          // Prix de vente client
+  imageUrl           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([categorie])
+}
+
+// ============================================================
+// DÉPENSES
+// ============================================================
+
+model Depense {
+  id              String   @id @default(cuid())
+  titre           String
+  montant         Decimal  @db.Decimal(14, 2)
+  categorie       String?
+  date            DateTime
+  description     String?  @db.Text
+  justificatifUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([date])
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  titre     String
+  corps     String   @db.Text
+  type      String
+  lienUrl   String?
+  isLu      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isLu])
+}
