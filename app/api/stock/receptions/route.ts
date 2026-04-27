@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 // GET — liste toutes les réceptions (avec infos commande)
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("stock:read")
   if (error) return error
 
   const { searchParams } = new URL(req.url)
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
 // POST — initialise les réceptions depuis les lignes d'une commande
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"])
+  const { error } = await requirePermission("stock:manage")
   if (error) return error
 
   const { commandeId } = await req.json()

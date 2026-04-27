@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 const DEFAULT_ETAPES = [
@@ -10,7 +10,7 @@ const DEFAULT_ETAPES = [
 ]
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("logistique:read")
   if (error) return error
 
   try {
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"])
+  const { error } = await requirePermission("logistique:manage")
   if (error) return error
 
   try {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("production:read")
   const { id } = await params
   if (error) return error
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error } = await requirePermission("production:manage")
   const { id } = await params
   if (error) return error
 
@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("production:manage")
   const { id } = await params
   if (error) return error
 

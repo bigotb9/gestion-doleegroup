@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("stock:read")
   if (error) return error
 
   const articles = await prisma.articleStock.findMany({
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"])
+  const { error } = await requirePermission("stock:manage")
   if (error) return error
 
   const body = await req.json()

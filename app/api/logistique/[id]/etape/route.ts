@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { LogistiqueStatus } from "@prisma/client"
 // Map step ordre to logistique status value
@@ -11,7 +11,7 @@ const ETAPE_STATUS_MAP: Record<number, LogistiqueStatus> = {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER", "CHARGE_OPERATIONS"])
+  const { error } = await requirePermission("logistique:manage")
   const { id } = await params
   if (error) return error
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"])
+  const { error } = await requirePermission("livraison:manage")
   const { id } = await params
   if (error) return error
 

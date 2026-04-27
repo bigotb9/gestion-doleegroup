@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("depense:read")
   if (error) return error
 
   const { searchParams } = new URL(req.url)
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("depense:manage")
   if (error) return error
 
   const body = await req.json()

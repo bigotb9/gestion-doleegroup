@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { supabaseAdmin, JUSTIFICATIFS_PAIEMENTS_BUCKET } from "@/lib/supabase"
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("paiement:record")
   if (error) return error
 
   const formData = await req.formData()

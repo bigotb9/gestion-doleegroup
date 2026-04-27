@@ -231,7 +231,8 @@ export function canDo(
   customPermissions?: string[] | null
 ): boolean {
   if (!role) return false
-  if (customPermissions && customPermissions.length > 0) {
+  // null/undefined = utiliser les défauts du rôle ; [] = aucune permission
+  if (customPermissions !== null && customPermissions !== undefined) {
     return customPermissions.includes(action)
   }
   return ROLE_PERMISSIONS[role]?.includes(action) ?? false

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroCommande } from "@/lib/numero-generator"
 import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("commande:read")
   if (error) return error
 
   const { searchParams } = new URL(req.url)
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, session } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error, session } = await requirePermission("commande:create")
   if (error) return error
 
   try {

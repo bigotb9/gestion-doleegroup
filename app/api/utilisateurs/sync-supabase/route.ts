@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase"
 
@@ -14,7 +14,7 @@ import { supabaseAdmin } from "@/lib/supabase"
  * Réservé aux MANAGER.
  */
 export async function POST() {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("users:manage")
   if (error) return error
 
   const prismaUsers = await prisma.user.findMany({

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAuth(["MANAGER"])
+  const { error, session } = await requirePermission("paiement:confirm")
   const { id } = await params
   if (error) return error
 

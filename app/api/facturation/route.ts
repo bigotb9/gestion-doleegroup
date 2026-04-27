@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroFacture } from "@/lib/numero-generator"
 import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth()
+  const { error } = await requirePermission("facturation:read")
   if (error) return error
 
   const factures = await prisma.facture.findMany({
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, session } = await requireAuth(["MANAGER"])
+  const { error, session } = await requirePermission("facturation:manage")
   if (error) return error
 
   const { commandeId, type, montantHT, montantTVA, montantTTC, dateEcheance, fneFileUrl } = await req.json()

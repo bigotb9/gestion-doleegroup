@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroBCF } from "@/lib/numero-generator"
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error } = await requirePermission("production:manage")
   if (error) return error
 
   const {

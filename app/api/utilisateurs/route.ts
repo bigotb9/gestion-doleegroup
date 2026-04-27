@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 import { logAudit } from "@/lib/audit"
 
 export async function GET() {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("users:manage")
   if (error) return error
 
   const users = await prisma.user.findMany({
@@ -31,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, session } = await requireAuth(["MANAGER"])
+  const { error, session } = await requirePermission("users:manage")
   if (error) return error
 
   const { name, email, password, role, avatarUrl, customRoleId } = await req.json()

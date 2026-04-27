@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 // POST — enregistrer un paiement fournisseur
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("production:manage")
   const { id: productionId } = await params
   if (error) return error
 
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 // DELETE — supprimer un paiement fournisseur
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("production:manage")
   const { id: productionId } = await params
   if (error) return error
 

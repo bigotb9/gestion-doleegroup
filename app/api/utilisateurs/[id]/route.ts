@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error } = await requirePermission("users:manage")
   const { id } = await params
   if (error) return error
 
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAuth(["MANAGER"])
+  const { error, session } = await requirePermission("users:manage")
   const { id } = await params
   if (error) return error
 
@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAuth(["MANAGER"])
+  const { error, session } = await requirePermission("users:manage")
   const { id } = await params
   if (error) return error
 

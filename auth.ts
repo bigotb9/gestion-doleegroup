@@ -67,6 +67,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           })
           if (dbUser) {
+            // Utilisateur désactivé → invalider la session immédiatement
+            if (!dbUser.isActive) return null
             session.user.id = token.id
             session.user.role = dbUser.role
             session.user.image = dbUser.avatarUrl ?? token.image ?? null

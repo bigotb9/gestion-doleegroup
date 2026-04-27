@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAuth()
+  const { error, session } = await requirePermission("crm:edit")
   const { id } = await params
   if (error) return error
 

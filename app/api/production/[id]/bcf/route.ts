@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import fs from "fs"
 import path from "path"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, session } = await requireAuth()
+  const { error, session } = await requirePermission("production:read")
   const { id } = await params
   if (error) return error
 

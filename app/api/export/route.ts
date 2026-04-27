@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-helpers"
+import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 function toCsv(rows: Record<string, unknown>[]): string {
@@ -21,7 +21,7 @@ function toCsv(rows: Record<string, unknown>[]): string {
 }
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error } = await requirePermission("commande:read")
   if (error) return error
 
   const { searchParams } = new URL(req.url)
