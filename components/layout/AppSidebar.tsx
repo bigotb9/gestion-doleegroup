@@ -30,30 +30,34 @@ import {
   LayoutGrid,
 } from "lucide-react"
 
+type SidebarAction = Parameters<typeof canDo>[1]
+
 interface NavItem {
   label: string
   href: string
   icon: React.ElementType
-  action?: Parameters<typeof canDo>[1]
+  action?: SidebarAction
+  // Visible si l'utilisateur a au moins UNE de ces actions (modules read+manage)
+  actionAny?: SidebarAction[]
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard, action: "dashboard:read" },
   { label: "CRM / Prospects", href: "/crm", icon: Users, action: "crm:read" },
   { label: "Factures proforma", href: "/devis", icon: FileText, action: "devis:read" },
   { label: "Commandes", href: "/commandes", icon: ShoppingCart, action: "commande:read" },
   { label: "Kanban commandes", href: "/commandes/kanban", icon: LayoutGrid, action: "commande:read" },
-  { label: "Fournisseurs", href: "/fournisseurs", icon: Building2, action: "production:read" },
-  { label: "Transitaires", href: "/transitaires", icon: Anchor, action: "logistique:read" },
+  { label: "Fournisseurs", href: "/fournisseurs", icon: Building2, actionAny: ["production:read", "production:manage"] },
+  { label: "Transitaires", href: "/transitaires", icon: Anchor, actionAny: ["logistique:read", "logistique:manage"] },
   { label: "Logistique", href: "/logistique", icon: Truck, action: "logistique:read" },
-  { label: "Stock", href: "/stock", icon: Package, action: "stock:read" },
-  { label: "Livraisons", href: "/livraisons", icon: PackageCheck, action: "livraison:read" },
-  { label: "Facturation", href: "/facturation", icon: Receipt, action: "facturation:read" },
-  { label: "Dépenses", href: "/depenses", icon: TrendingDown },
-  { label: "Fiche de coût produit", href: "/fiches-cout", icon: BookOpen },
-  { label: "Échéances", href: "/echeances", icon: CalendarClock },
-  { label: "Relances CRM", href: "/crm/relances", icon: Bell },
-  { label: "Exports CSV", href: "/export", icon: Download },
+  { label: "Stock", href: "/stock", icon: Package, actionAny: ["stock:read", "stock:manage"] },
+  { label: "Livraisons", href: "/livraisons", icon: PackageCheck, actionAny: ["livraison:read", "livraison:manage"] },
+  { label: "Facturation", href: "/facturation", icon: Receipt, actionAny: ["facturation:read", "facturation:manage"] },
+  { label: "Dépenses", href: "/depenses", icon: TrendingDown, actionAny: ["depense:read", "depense:manage"] },
+  { label: "Fiche de coût produit", href: "/fiches-cout", icon: BookOpen, actionAny: ["production:read", "production:manage"] },
+  { label: "Échéances", href: "/echeances", icon: CalendarClock, action: "commande:read" },
+  { label: "Relances CRM", href: "/crm/relances", icon: Bell, action: "crm:read" },
+  { label: "Exports CSV", href: "/export", icon: Download, action: "commande:read" },
 ]
 
 const SETTINGS_ITEMS: NavItem[] = [
@@ -81,6 +85,7 @@ export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
 
   function renderNavItem(item: NavItem) {
     if (item.action && !canDo(role, item.action, permissions)) return null
+    if (item.actionAny && !item.actionAny.some((a) => canDo(role, a, permissions))) return null
     const active = isActive(item.href)
     return (
       <motion.div key={item.href} whileHover={{ x: 2 }} transition={{ duration: 0.15 }}>

@@ -2,8 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { motion } from "motion/react"
 import { cn } from "@/lib/utils"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -12,16 +15,27 @@ import {
   CalendarClock,
 } from "lucide-react"
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Tableau", icon: LayoutDashboard },
-  { href: "/commandes", label: "Commandes", icon: ShoppingCart },
-  { href: "/crm", label: "CRM", icon: Users },
-  { href: "/stock", label: "Stock", icon: Package },
-  { href: "/echeances", label: "Échéances", icon: CalendarClock },
+type Action = Parameters<typeof canDo>[1]
+
+const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; action?: Action; actionAny?: Action[] }[] = [
+  { href: "/dashboard", label: "Tableau", icon: LayoutDashboard, action: "dashboard:read" },
+  { href: "/commandes", label: "Commandes", icon: ShoppingCart, action: "commande:read" },
+  { href: "/crm", label: "CRM", icon: Users, action: "crm:read" },
+  { href: "/stock", label: "Stock", icon: Package, actionAny: ["stock:read", "stock:manage"] },
+  { href: "/echeances", label: "Échéances", icon: CalendarClock, action: "commande:read" },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = session?.user?.permissions ?? null
+
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.action && !canDo(role, item.action, permissions)) return false
+    if (item.actionAny && !item.actionAny.some((a) => canDo(role, a, permissions))) return false
+    return true
+  })
 
   function isActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard"
@@ -39,7 +53,7 @@ export function BottomNav() {
       }}
     >
       <div className="flex items-center justify-around px-2 pt-2 pb-safe">
-        {NAV_ITEMS.map((item) => {
+        {visibleItems.map((item) => {
           const active = isActive(item.href)
           return (
             <Link
