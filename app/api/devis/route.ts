@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroDevis } from "@/lib/numero-generator"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest) {
   const { error } = await requireAuth()
@@ -84,6 +85,16 @@ export async function POST(req: NextRequest) {
       lignes: true,
       client: { select: { id: true, raisonSociale: true } },
     },
+  })
+
+  await logAudit({
+    userId: session!.user.id,
+    userEmail: session!.user.email,
+    action: "CREATE",
+    entity: "DEVIS",
+    entityId: devis.id,
+    entityRef: devis.numero,
+    details: `Client : ${devis.client.raisonSociale} — Total : ${Number(devis.total).toFixed(0)} ${devis.devise}`,
   })
 
   return NextResponse.json(devis, { status: 201 })

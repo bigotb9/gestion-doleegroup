@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
+import { logAudit } from "@/lib/audit"
 
 export async function GET() {
   const { error } = await requireAuth(["MANAGER"])
@@ -30,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error, session } = await requireAuth(["MANAGER"])
   if (error) return error
 
   const { name, email, password, role, avatarUrl, customRoleId } = await req.json()
@@ -89,6 +90,16 @@ export async function POST(req: NextRequest) {
         supabaseUid: true,
         createdAt: true,
       },
+    })
+
+    await logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "CREATE",
+      entity: "USER",
+      entityId: user.id,
+      entityRef: user.email,
+      details: `Rôle : ${role} — Créé par ${session!.user.email}`,
     })
 
     return NextResponse.json(user, { status: 201 })

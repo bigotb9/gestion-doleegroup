@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
+import { logAudit } from "@/lib/audit"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, session } = await requireAuth(["MANAGER"])
@@ -33,6 +34,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       createNotification(u.id, "Devis validé", `Le devis ${devis.numero} a été validé.`, "success", `/devis/${devis.id}`)
     )
   )
+
+  await logAudit({
+    userId: session!.user.id,
+    userEmail: session!.user.email,
+    action: "VALIDATE",
+    entity: "DEVIS",
+    entityId: devis.id,
+    entityRef: devis.numero,
+  })
 
   return NextResponse.json(updated)
 }

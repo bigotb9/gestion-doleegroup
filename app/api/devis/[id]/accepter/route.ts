@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroCommande } from "@/lib/numero-generator"
+import { logAudit } from "@/lib/audit"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, session } = await requireAuth(["MANAGER"])
@@ -52,6 +53,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         lignes: true,
         client: { select: { id: true, raisonSociale: true } },
       },
+    }),
+  ])
+
+  await Promise.all([
+    logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "ACCEPT",
+      entity: "DEVIS",
+      entityId: devis.id,
+      entityRef: devis.numero,
+      details: `Commande créée : ${commande.numero}`,
+    }),
+    logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "CREATE",
+      entity: "COMMANDE",
+      entityId: commande.id,
+      entityRef: commande.numero,
+      details: `Depuis devis ${devis.numero}`,
     }),
   ])
 

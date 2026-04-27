@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
+import { logAudit } from "@/lib/audit"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error, session } = await requireAuth(["MANAGER", "SECRETAIRE"])
   const { id } = await params
   if (error) return error
 
@@ -16,6 +17,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const updated = await prisma.devis.update({
     where: { id: id },
     data: { status: "ENVOYE" },
+  })
+
+  await logAudit({
+    userId: session!.user.id,
+    userEmail: session!.user.email,
+    action: "SEND",
+    entity: "DEVIS",
+    entityId: devis.id,
+    entityRef: devis.numero,
   })
 
   return NextResponse.json(updated)

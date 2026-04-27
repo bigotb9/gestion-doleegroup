@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await requireAuth(["MANAGER"])
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error, session } = await requireAuth(["MANAGER"])
   const { id } = await params
   if (error) return error
 
@@ -106,6 +107,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     })
 
+    const changes: string[] = []
+    if (name !== undefined) changes.push(`nom: ${name}`)
+    if (role !== undefined) changes.push(`rôle: ${role}`)
+    if (isActive !== undefined) changes.push(isActive ? "activé" : "désactivé")
+    if (password) changes.push("mot de passe modifié")
+
+    await logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "UPDATE",
+      entity: "USER",
+      entityId: id,
+      entityRef: user.email,
+      details: changes.length ? changes.join(", ") : undefined,
+    })
+
     return NextResponse.json(user)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Erreur serveur"
@@ -114,7 +131,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error, session } = await requireAuth(["MANAGER"])
   const { id } = await params
   if (error) return error
 
@@ -131,6 +148,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         return NextResponse.json({ error: authErr.message }, { status: 500 })
       }
     }
+
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { email: true, name: true } })
+
+    await logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "DELETE",
+      entity: "USER",
+      entityId: id,
+      entityRef: targetUser?.email ?? id,
+      details: `Utilisateur supprimé : ${targetUser?.name ?? id}`,
+    })
 
     // Supprimer de Prisma
     await prisma.user.delete({ where: { id } })

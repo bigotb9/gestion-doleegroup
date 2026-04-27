@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await requireAuth()
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth()
+  const { error, session } = await requireAuth()
   const { id } = await params
   if (error) return error
 
@@ -81,6 +82,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       include: { lignes: { orderBy: { ordre: "asc" } } },
     })
 
+    await logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "UPDATE",
+      entity: "DEVIS",
+      entityId: id,
+      entityRef: existing.numero,
+    })
+
     return NextResponse.json(devis)
   } catch (err) {
     console.error("PATCH /api/devis/[id]", err)
@@ -90,7 +100,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requireAuth(["MANAGER"])
+  const { error, session } = await requireAuth(["MANAGER"])
   const { id } = await params
   if (error) return error
 
@@ -99,6 +109,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (existing.status !== "BROUILLON") {
     return NextResponse.json({ error: "Seuls les devis en brouillon peuvent être supprimés" }, { status: 400 })
   }
+
+  await logAudit({
+    userId: session!.user.id,
+    userEmail: session!.user.email,
+    action: "DELETE",
+    entity: "DEVIS",
+    entityId: id,
+    entityRef: existing.numero,
+  })
 
   await prisma.devis.delete({ where: { id: id } })
   return NextResponse.json({ success: true })

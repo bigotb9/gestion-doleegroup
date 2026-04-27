@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 import { generateNumeroCommande } from "@/lib/numero-generator"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(req: NextRequest) {
   const { error } = await requireAuth()
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requireAuth(["MANAGER", "SECRETAIRE"])
+  const { error, session } = await requireAuth(["MANAGER", "SECRETAIRE"])
   if (error) return error
 
   try {
@@ -103,6 +104,16 @@ export async function POST(req: NextRequest) {
         lignes: true,
         client: { select: { id: true, raisonSociale: true } },
       },
+    })
+
+    await logAudit({
+      userId: session!.user.id,
+      userEmail: session!.user.email,
+      action: "CREATE",
+      entity: "COMMANDE",
+      entityId: commande.id,
+      entityRef: commande.numero,
+      details: `Client : ${commande.client.raisonSociale} — Total : ${Number(commande.montantTotal).toFixed(0)}`,
     })
 
     return NextResponse.json(commande, { status: 201 })
