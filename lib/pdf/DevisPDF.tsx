@@ -164,7 +164,6 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
 
         {/* Lignes — wrap={true} pour que le tableau commence page 1 et s'étende */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Lignes de la facture proforma</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader} fixed>
               <Text style={[styles.tableHeaderCell, { flex: 4 }]}>Désignation</Text>
@@ -237,28 +236,28 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
             <View style={{ marginBottom: 10 }}>
               <View style={{
                 borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: "hidden",
-                marginBottom: 8, alignSelf: "flex-start", minWidth: 280,
+                marginBottom: 8, width: 320,
               }}>
                 <View style={{ backgroundColor: colors.primary + "11", flexDirection: "row", padding: "5 10" }}>
-                  <Text style={[styles.label, { flex: 3, marginBottom: 0 }]}>Échéance</Text>
-                  <Text style={[styles.label, { flex: 1, textAlign: "right", marginBottom: 0 }]}>%</Text>
-                  <Text style={[styles.label, { flex: 2, textAlign: "right", marginBottom: 0 }]}>Montant</Text>
+                  <Text style={[styles.label, { width: 140, marginBottom: 0 }]}>Échéance</Text>
+                  <Text style={[styles.label, { width: 40, textAlign: "right", marginBottom: 0 }]}>%</Text>
+                  <Text style={[styles.label, { flex: 1, textAlign: "right", marginBottom: 0 }]}>Montant</Text>
                 </View>
                 <View style={{ flexDirection: "row", padding: "6 10", borderTopWidth: 1, borderTopColor: colors.border }}>
-                  <Text style={[styles.value, { flex: 3, fontFamily: "Helvetica-Bold" }]}>À la commande</Text>
-                  <Text style={[styles.value, { flex: 1, textAlign: "right", color: colors.primary }]}>
+                  <Text style={[styles.value, { width: 140, fontFamily: "Helvetica-Bold" }]}>À la commande</Text>
+                  <Text style={[styles.value, { width: 40, textAlign: "right", color: colors.primary }]}>
                     {conditions.commande}%
                   </Text>
-                  <Text style={[styles.value, { flex: 2, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
+                  <Text style={[styles.value, { flex: 1, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
                     {fmt(totalNum * conditions.commande / 100, devis.devise)}
                   </Text>
                 </View>
                 <View style={{ flexDirection: "row", padding: "6 10", borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
-                  <Text style={[styles.value, { flex: 3, fontFamily: "Helvetica-Bold" }]}>À la livraison</Text>
-                  <Text style={[styles.value, { flex: 1, textAlign: "right", color: colors.primary }]}>
+                  <Text style={[styles.value, { width: 140, fontFamily: "Helvetica-Bold" }]}>À la livraison</Text>
+                  <Text style={[styles.value, { width: 40, textAlign: "right", color: colors.primary }]}>
                     {conditions.livraison}%
                   </Text>
-                  <Text style={[styles.value, { flex: 2, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
+                  <Text style={[styles.value, { flex: 1, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
                     {fmt(totalNum * conditions.livraison / 100, devis.devise)}
                   </Text>
                 </View>
