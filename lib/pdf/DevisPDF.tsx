@@ -39,6 +39,8 @@ type DevisData = {
   createdBy: { name: string }
 }
 
+type ConditionsStructurees = { commande: number; livraison: number }
+
 const STATUS_LABELS: Record<string, string> = {
   BROUILLON: "Brouillon",
   EN_ATTENTE_VALIDATION: "En attente",
@@ -60,7 +62,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 function fmt(n: string | number, devise: string) {
-  const parts = Number(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0")
+  const parts = Number(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ")
   return `${parts} ${devise}`
 }
 
@@ -68,10 +70,23 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
 }
 
+function parseConditions(raw: string | null): ConditionsStructurees | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (typeof parsed.commande === "number" && typeof parsed.livraison === "number") {
+      return parsed as ConditionsStructurees
+    }
+  } catch { /* plain text */ }
+  return null
+}
+
 export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl?: string }) {
   const statusColor = STATUS_COLORS[devis.status] ?? colors.muted
   const hasRemise = devis.lignes.some((l) => Number(l.remise) > 0)
   const hasRemiseFixe = devis.lignes.some((l) => Number(l.remiseFixe) > 0)
+  const conditions = parseConditions(devis.conditionsPaiement)
+  const totalNum = Number(devis.total)
 
   return (
     <Document title={`Facture proforma ${devis.numero}`} author="Dolee Group">
@@ -147,11 +162,11 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
           </View>
         </View>
 
-        {/* Lignes */}
+        {/* Lignes — wrap={true} pour que le tableau commence page 1 et s'étende */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lignes de la facture proforma</Text>
           <View style={styles.table}>
-            <View style={styles.tableHeader}>
+            <View style={styles.tableHeader} fixed>
               <Text style={[styles.tableHeaderCell, { flex: 4 }]}>Désignation</Text>
               <Text style={[styles.tableHeaderCell, { flex: 1, textAlign: "center" }]}>Qté</Text>
               <Text style={[styles.tableHeaderCell, { flex: 2, textAlign: "right" }]}>P.U.</Text>
@@ -164,7 +179,7 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
               <Text style={[styles.tableHeaderCell, { flex: 2, textAlign: "right" }]}>Total</Text>
             </View>
             {devis.lignes.map((l, i) => (
-              <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+              <View key={i} wrap={false} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                 <View style={{ flex: 4 }}>
                   <Text style={[styles.tableCell, { fontFamily: "Helvetica-Bold" }]}>{l.designation}</Text>
                   {l.description && (
@@ -216,11 +231,45 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
         {/* Conditions paiement */}
         <View style={[styles.section, { marginTop: 20 }]}>
           <Text style={styles.sectionTitle}>Conditions de paiement</Text>
-          {devis.conditionsPaiement && (
+
+          {/* Échéancier structuré */}
+          {conditions ? (
+            <View style={{ marginBottom: 10 }}>
+              <View style={{
+                borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: "hidden",
+                marginBottom: 8, alignSelf: "flex-start", minWidth: 280,
+              }}>
+                <View style={{ backgroundColor: colors.primary + "11", flexDirection: "row", padding: "5 10" }}>
+                  <Text style={[styles.label, { flex: 3, marginBottom: 0 }]}>Échéance</Text>
+                  <Text style={[styles.label, { flex: 1, textAlign: "right", marginBottom: 0 }]}>%</Text>
+                  <Text style={[styles.label, { flex: 2, textAlign: "right", marginBottom: 0 }]}>Montant</Text>
+                </View>
+                <View style={{ flexDirection: "row", padding: "6 10", borderTopWidth: 1, borderTopColor: colors.border }}>
+                  <Text style={[styles.value, { flex: 3, fontFamily: "Helvetica-Bold" }]}>À la commande</Text>
+                  <Text style={[styles.value, { flex: 1, textAlign: "right", color: colors.primary }]}>
+                    {conditions.commande}%
+                  </Text>
+                  <Text style={[styles.value, { flex: 2, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
+                    {fmt(totalNum * conditions.commande / 100, devis.devise)}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: "row", padding: "6 10", borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
+                  <Text style={[styles.value, { flex: 3, fontFamily: "Helvetica-Bold" }]}>À la livraison</Text>
+                  <Text style={[styles.value, { flex: 1, textAlign: "right", color: colors.primary }]}>
+                    {conditions.livraison}%
+                  </Text>
+                  <Text style={[styles.value, { flex: 2, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>
+                    {fmt(totalNum * conditions.livraison / 100, devis.devise)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : devis.conditionsPaiement ? (
             <Text style={[styles.value, { marginBottom: 8, fontFamily: "Helvetica-Bold" }]}>
               {devis.conditionsPaiement}
             </Text>
-          )}
+          ) : null}
+
           <View style={{ gap: 4 }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 4 }}>
               <Text style={[styles.label, { marginBottom: 0, minWidth: 90 }]}>Par chèque</Text>

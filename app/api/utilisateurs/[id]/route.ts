@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   if (error) return error
 
-  const { name, email, role, isActive, avatarUrl, password, permissions } = await req.json()
+  const { name, email, role, isActive, avatarUrl, password, permissions, customRoleId } = await req.json()
 
   // Récupère le supabaseUid du user pour sync
   const existingUser = await prisma.user.findUnique({
@@ -51,6 +51,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (password) prismaData.passwordHash = await bcrypt.hash(password, 12)
   if (permissions !== undefined) {
     prismaData.permissions = permissions === null ? null : JSON.stringify(permissions)
+  }
+  if (customRoleId !== undefined) {
+    prismaData.customRoleId = customRoleId || null
   }
 
   try {
@@ -97,6 +100,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         isActive: true,
         avatarUrl: true,
         supabaseUid: true,
+        customRoleId: true,
+        customRole: { select: { id: true, name: true } },
         updatedAt: true,
       },
     })

@@ -58,15 +58,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { role: true, permissions: true, isActive: true, avatarUrl: true },
+            select: {
+              role: true,
+              permissions: true,
+              isActive: true,
+              avatarUrl: true,
+              customRole: { select: { permissions: true } },
+            },
           })
           if (dbUser) {
             session.user.id = token.id
             session.user.role = dbUser.role
             session.user.image = dbUser.avatarUrl ?? token.image ?? null
-            session.user.permissions = dbUser.permissions
-              ? (() => { try { return JSON.parse(dbUser.permissions!) } catch { return null } })()
-              : null
+            // Rôle CUSTOM → permissions viennent de la table CustomRole
+            if (dbUser.role === "CUSTOM" && dbUser.customRole) {
+              try {
+                session.user.permissions = JSON.parse(dbUser.customRole.permissions)
+              } catch { session.user.permissions = null }
+            } else {
+              session.user.permissions = dbUser.permissions
+                ? (() => { try { return JSON.parse(dbUser.permissions!) } catch { return null } })()
+                : null
+            }
           }
         } catch {
           // DB indisponible — on utilise les données du token JWT

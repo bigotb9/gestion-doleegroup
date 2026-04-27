@@ -18,6 +18,8 @@ export async function GET() {
       avatarUrl: true,
       permissions: true,
       supabaseUid: true,
+      customRoleId: true,
+      customRole: { select: { id: true, name: true } },
       createdAt: true,
       updatedAt: true,
     },
@@ -31,10 +33,14 @@ export async function POST(req: NextRequest) {
   const { error } = await requireAuth(["MANAGER"])
   if (error) return error
 
-  const { name, email, password, role, avatarUrl } = await req.json()
+  const { name, email, password, role, avatarUrl, customRoleId } = await req.json()
 
   if (!name || !email || !password || !role) {
     return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 })
+  }
+
+  if (role === "CUSTOM" && !customRoleId) {
+    return NextResponse.json({ error: "Un rôle personnalisé doit être sélectionné" }, { status: 400 })
   }
   if (password.length < 8) {
     return NextResponse.json({ error: "Le mot de passe doit faire au moins 8 caractères" }, { status: 400 })
@@ -71,6 +77,7 @@ export async function POST(req: NextRequest) {
         role,
         avatarUrl,
         supabaseUid: authData.user.id,
+        ...(role === "CUSTOM" && customRoleId ? { customRoleId } : {}),
       },
       select: {
         id: true,

@@ -4,6 +4,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   MANAGER: "Manager",
   SECRETAIRE: "Secrétaire",
   CHARGE_OPERATIONS: "Chargé des Opérations",
+  CUSTOM: "Rôle personnalisé",
 }
 
 export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {

@@ -104,7 +104,9 @@ export default function NouveauDevisPage() {
   const [dateValidite, setDateValidite] = useState("")
   const [devise, setDevise] = useState<Currency>("CFA")
   const [notes, setNotes] = useState("")
-  const [conditionsPaiement, setConditionsPaiement] = useState("À la commande 70%, À la livraison 30%")
+  const [conditionsMode, setConditionsMode] = useState<"structured" | "free">("structured")
+  const [conditionsCommande, setConditionsCommande] = useState(70)
+  const [conditionsTexte, setConditionsTexte] = useState("")
   const [delaiLivraison, setDelaiLivraison] = useState("")
 
   // Section 3 — lignes
@@ -227,7 +229,9 @@ export default function NouveauDevisPage() {
         dateValidite,
         devise,
         notes: notes.trim() || undefined,
-        conditionsPaiement: conditionsPaiement.trim() || undefined,
+        conditionsPaiement: conditionsMode === "structured"
+          ? JSON.stringify({ commande: conditionsCommande, livraison: 100 - conditionsCommande })
+          : conditionsTexte.trim() || undefined,
         delaiLivraison: delaiLivraison.trim() || undefined,
         taxe,
         lignes: lignes.map((l, i) => ({
@@ -438,18 +442,76 @@ export default function NouveauDevisPage() {
               </Select>
             </div>
 
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="conditionsPaiement">Conditions de paiement</Label>
-              <Textarea
-                id="conditionsPaiement"
-                value={conditionsPaiement}
-                onChange={(e) => setConditionsPaiement(e.target.value)}
-                rows={2}
-                className="resize-none text-sm"
-              />
-              <p className="text-xs text-slate-400">
-                Coordonnées bancaires (chèque / virement) ajoutées automatiquement dans le PDF.
-              </p>
+            <div className="sm:col-span-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Conditions de paiement</Label>
+                <div className="flex gap-1 rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => setConditionsMode("structured")}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${conditionsMode === "structured" ? "bg-white shadow-sm text-blue-700" : "text-slate-500 hover:text-slate-700"}`}
+                  >Acompte / Solde</button>
+                  <button
+                    type="button"
+                    onClick={() => setConditionsMode("free")}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${conditionsMode === "free" ? "bg-white shadow-sm text-blue-700" : "text-slate-500 hover:text-slate-700"}`}
+                  >Texte libre</button>
+                </div>
+              </div>
+
+              {conditionsMode === "structured" ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">% à la commande</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={conditionsCommande}
+                          onChange={(e) => setConditionsCommande(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                          className="w-24 h-9 text-center font-semibold text-blue-700"
+                        />
+                        <span className="text-sm font-bold text-slate-400">%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">% à la livraison</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-9 flex items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-semibold text-slate-600">
+                          {100 - conditionsCommande}
+                        </div>
+                        <span className="text-sm font-bold text-slate-400">%</span>
+                      </div>
+                    </div>
+                  </div>
+                  {totalTTC > 0 && (
+                    <div className="rounded-lg bg-white border border-slate-100 divide-y divide-slate-100 text-sm">
+                      <div className="flex justify-between px-3 py-2">
+                        <span className="text-slate-500">À la commande ({conditionsCommande}%)</span>
+                        <span className="font-semibold text-slate-900">{formatMontant(totalTTC * conditionsCommande / 100, devise)}</span>
+                      </div>
+                      <div className="flex justify-between px-3 py-2">
+                        <span className="text-slate-500">À la livraison ({100 - conditionsCommande}%)</span>
+                        <span className="font-semibold text-slate-900">{formatMontant(totalTTC * (100 - conditionsCommande) / 100, devise)}</span>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-slate-400">Les montants sont calculés automatiquement dans le PDF.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <Textarea
+                    value={conditionsTexte}
+                    onChange={(e) => setConditionsTexte(e.target.value)}
+                    rows={2}
+                    className="resize-none text-sm"
+                    placeholder="Ex : Paiement à 30 jours fin de mois..."
+                  />
+                  <p className="text-[10px] text-slate-400">Coordonnées bancaires ajoutées automatiquement dans le PDF.</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">

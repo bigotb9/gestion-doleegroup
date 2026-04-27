@@ -15,6 +15,7 @@ enum Role {
   MANAGER
   SECRETAIRE
   CHARGE_OPERATIONS
+  CUSTOM
 }
 
 enum ProspectStatus {
@@ -107,9 +108,12 @@ model User {
   avatarUrl     String?
   isActive      Boolean   @default(true)
   permissions   String?   // JSON array of Action strings; null = use role defaults
+  customRoleId  String?   // Set when role = CUSTOM
   supabaseUid   String?   @unique // UUID du compte Supabase Auth correspondant
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  customRole         CustomRole?    @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
 
   sessions           Session[]
   accounts           Account[]
@@ -155,6 +159,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model CustomRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String   @default("[]") // JSON array of Action strings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
 }
 
 // ============================================================

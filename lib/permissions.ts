@@ -217,6 +217,8 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "facturation:read",
     "depense:read",
   ],
+  // CUSTOM : permissions dynamiques définies dans la table CustomRole
+  CUSTOM: [],
 }
 
 export function getDefaultPermissions(role: Role): Action[] {
