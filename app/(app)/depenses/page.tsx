@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -69,6 +72,12 @@ const EMPTY_FORM: FormState = {
 }
 
 export default function DepensesPage() {
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "depense:read", permissions)
+  const canManage = canDo(role, "depense:manage", permissions)
+
   const [depenses, setDepenses] = useState<Depense[]>([])
   const [total, setTotal] = useState(0)
   const [totalMontant, setTotalMontant] = useState(0)
@@ -87,6 +96,10 @@ export default function DepensesPage() {
   const [justificatifFileName, setJustificatifFileName] = useState<string | null>(null)
 
   const fetchDepenses = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -102,7 +115,7 @@ export default function DepensesPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterCategorie])
+  }, [filterCategorie, canRead])
 
   useEffect(() => { fetchDepenses() }, [fetchDepenses])
 
@@ -208,7 +221,7 @@ export default function DepensesPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Dépenses" description="Suivi des charges et dépenses de l'entreprise">
-        <RoleGate roles={["MANAGER"]}>
+        <RoleGate action="depense:manage">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger render={<Button size="sm" onClick={openNew} />}>
               <Plus className="h-4 w-4 mr-1.5" />
@@ -333,6 +346,17 @@ export default function DepensesPage() {
         </RoleGate>
       </PageHeader>
 
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode création uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez enregistrer de nouvelles dépenses via le bouton « Nouvelle dépense ». La liste des dépenses ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (
+      <>
       {/* Résumé financier — cartes premium */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="group relative rounded-2xl p-5 overflow-hidden border border-red-100 bg-gradient-to-br from-white to-red-50/30 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(239,68,68,0.15)] transition-all duration-300">
@@ -448,7 +472,7 @@ export default function DepensesPage() {
                         )}
                       </td>
                       <td className="px-6 py-3">
-                        <RoleGate roles={["MANAGER"]}>
+                        <RoleGate action="depense:manage">
                           <div className="flex items-center gap-1 justify-end">
                             <Button
                               size="sm"
@@ -486,6 +510,8 @@ export default function DepensesPage() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   )
 }

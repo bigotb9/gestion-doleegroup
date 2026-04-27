@@ -71,3 +71,15 @@ export async function requirePagePermission(action: Action, fallback = "/dashboa
 
   if (!canDo(up.role, action, up.permissions)) redirect(fallback)
 }
+
+// For server component layouts: redirects if NONE of the actions are granted
+export async function requirePagePermissionAny(actions: Action[], fallback = "/dashboard") {
+  const session = await auth()
+  if (!session?.user?.id) redirect("/login")
+
+  const up = await fetchUserPermissions(session.user.id)
+  if (!up) redirect("/login")
+
+  const hasAny = actions.some((a) => canDo(up.role, a, up.permissions))
+  if (!hasAny) redirect(fallback)
+}
