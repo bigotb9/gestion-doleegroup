@@ -7,9 +7,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ROLE_LABELS } from "@/lib/constants"
 import { Role } from "@prisma/client"
-import { Mail, Shield, User, Camera, Loader2 } from "lucide-react"
+import { Mail, Shield, User, Camera, Loader2, Search } from "lucide-react"
 import { SignOutButton } from "./SignOutButton"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export default function ProfilPage() {
   const { data: session, status, update } = useSession()
@@ -149,6 +150,17 @@ export default function ProfilPage() {
                 <p className="font-medium text-slate-900">{roleLabel}</p>
               </div>
             </div>
+          </div>
+
+          {/* Diagnostic permissions */}
+          <div className="pt-4 border-t border-slate-100">
+            <Link
+              href="/profil/permissions"
+              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              <Search className="h-4 w-4" />
+              Voir mes permissions effectives
+            </Link>
           </div>
 
           {/* Déconnexion */}

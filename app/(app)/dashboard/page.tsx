@@ -1,5 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic"
 import { redirect } from "next/navigation"
 import { canDo } from "@/lib/permissions"
 import { Role } from "@prisma/client"

@@ -40,7 +40,14 @@
       "Bash(vercel --prod)",
       "Bash(vercel link *)",
       "Bash(vercel --prod --scope bigotb9s-projects)",
-      "Bash(vercel env *)"
+      "Bash(vercel env *)",
+      "Bash(gh run *)",
+      "Bash(npx vercel *)",
+      "Bash(git commit -m 'feat: PDF tableau multi-pages, conditions paiement structurees, roles personnalises *)",
+      "Bash(git commit -m 'feat: bouton supprimer sur page detail facture proforma \\(MANAGER + BROUILLON\\) *)",
+      "Bash(git commit -m 'fix: PDF devis - supprimer titre tableau, corriger alignement conditions paiement *)",
+      "Bash(git commit -m 'fix: journal audit - logAudit sur toutes les routes critiques *)",
+      "Bash(git commit -m 'feat: fiches de cout - categorie Autre personnalisee + filtre intelligent *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\livraisons\\[id]",
@@ -48,7 +55,8 @@
       "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\production\\[id]",
       "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\stock\\receptions",
       "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\reconditionnement\\[id]\\articles",
-      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\devis\\[id]"
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\devis\\[id]",
+      "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\roles"
     ]
   }
 }
