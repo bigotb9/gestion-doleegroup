@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { motion } from "motion/react"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +36,12 @@ type Fournisseur = {
 
 export default function FournisseursPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "production:read", permissions)
+  const canManage = canDo(role, "production:manage", permissions)
+
   const [search, setSearch] = useState("")
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [total, setTotal] = useState(0)
@@ -46,6 +55,10 @@ export default function FournisseursPage() {
   }, [search])
 
   const fetchFournisseurs = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -63,7 +76,7 @@ export default function FournisseursPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, showInactif])
+  }, [debouncedSearch, showInactif, canRead])
 
   useEffect(() => {
     fetchFournisseurs()
@@ -71,8 +84,8 @@ export default function FournisseursPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Fournisseurs" description={`${total} fournisseur${total !== 1 ? "s" : ""}`}>
-        <RoleGate roles={["MANAGER", "SECRETAIRE"]}>
+      <PageHeader title="Fournisseurs" description={canRead ? `${total} fournisseur${total !== 1 ? "s" : ""}` : "Gestion fournisseurs"}>
+        <RoleGate action="production:manage">
           <Link
             href="/fournisseurs/nouveau"
             className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium h-9 gap-1.5 px-3 transition-all hover:opacity-90 hover:scale-[1.02] shadow-sm"
@@ -82,6 +95,16 @@ export default function FournisseursPage() {
         </RoleGate>
       </PageHeader>
 
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode création uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez ajouter de nouveaux fournisseurs via le bouton « Nouveau fournisseur ». La consultation de la liste ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (<>
       {/* Search & filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="relative max-w-sm flex-1">
@@ -206,6 +229,7 @@ export default function FournisseursPage() {
           )}
         </CardContent>
       </Card>
+      </>)}
     </div>
   )
 }

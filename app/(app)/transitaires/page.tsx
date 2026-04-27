@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { motion } from "motion/react"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { staggerContainer, staggerItem } from "@/lib/motion"
@@ -27,6 +30,12 @@ type Transitaire = {
 
 export default function TransitairesPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "logistique:read", permissions)
+  const canManage = canDo(role, "logistique:manage", permissions)
+
   const [search, setSearch] = useState("")
   const [transitaires, setTransitaires] = useState<Transitaire[]>([])
   const [total, setTotal] = useState(0)
@@ -40,6 +49,10 @@ export default function TransitairesPage() {
   }, [search])
 
   const fetchTransitaires = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -57,7 +70,7 @@ export default function TransitairesPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, showInactif])
+  }, [debouncedSearch, showInactif, canRead])
 
   useEffect(() => {
     fetchTransitaires()
@@ -67,9 +80,9 @@ export default function TransitairesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Transitaires"
-        description={`${total} transitaire${total !== 1 ? "s" : ""}`}
+        description={canRead ? `${total} transitaire${total !== 1 ? "s" : ""}` : "Gestion transitaires"}
       >
-        <RoleGate roles={["MANAGER", "SECRETAIRE"]}>
+        <RoleGate action="logistique:manage">
           <Link
             href="/transitaires/nouveau"
             className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium h-9 gap-1.5 px-3 transition-all hover:opacity-90 hover:scale-[1.02] shadow-sm"
@@ -79,6 +92,16 @@ export default function TransitairesPage() {
         </RoleGate>
       </PageHeader>
 
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode création uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez ajouter de nouveaux transitaires via le bouton « Nouveau transitaire ». La consultation de la liste ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (<>
       {/* Search & filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="relative max-w-sm flex-1">
@@ -190,6 +213,7 @@ export default function TransitairesPage() {
           )}
         </CardContent>
       </Card>
+      </>)}
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import { requirePagePermission } from "@/lib/auth-helpers"
+import { requirePagePermissionAny } from "@/lib/auth-helpers"
 
 export const dynamic = "force-dynamic"
 
 export default async function LivraisonsLayout({ children }: { children: React.ReactNode }) {
-  await requirePagePermission("livraison:read", "/commandes")
+  await requirePagePermissionAny(["livraison:read","livraison:manage"], "/commandes")
   return <>{children}</>
 }

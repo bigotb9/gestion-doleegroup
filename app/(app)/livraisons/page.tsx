@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { StatCards } from "@/components/shared/StatCards"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -78,6 +80,10 @@ export default function LivraisonsPage() {
   const router = useRouter()
   const userRole = session?.user?.role
   const userId = (session?.user as { id?: string } | undefined)?.id
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "livraison:read", permissions)
+  const canManage = canDo(role, "livraison:manage", permissions)
 
   const [livraisons, setLivraisons] = useState<Livraison[]>([])
   const [loading, setLoading] = useState(true)
@@ -98,6 +104,10 @@ export default function LivraisonsPage() {
   const [formSubmitting, setFormSubmitting] = useState(false)
 
   const fetchLivraisons = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -116,7 +126,7 @@ export default function LivraisonsPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, search, userRole, userId])
+  }, [activeTab, search, userRole, userId, canRead])
 
   useEffect(() => {
     const timer = setTimeout(() => fetchLivraisons(), 300)
@@ -202,7 +212,7 @@ export default function LivraisonsPage() {
         title="Livraisons"
         description="Suivi des livraisons"
       >
-        <RoleGate roles={["MANAGER", "SECRETAIRE"]}>
+        <RoleGate action="livraison:manage">
           <Dialog
             modal={false}
             open={planifierOpen}
@@ -328,6 +338,16 @@ export default function LivraisonsPage() {
         </RoleGate>
       </PageHeader>
 
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode planification uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez planifier de nouvelles livraisons via le bouton « Planifier une livraison ». La consultation des livraisons ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (<>
       {/* Stats KPI */}
       <StatCards
         cards={[
@@ -452,6 +472,7 @@ export default function LivraisonsPage() {
           )}
         </CardContent>
       </Card>
+      </>)}
     </div>
   )
 }

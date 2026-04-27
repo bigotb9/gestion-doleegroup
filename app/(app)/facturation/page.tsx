@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { motion } from "motion/react"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatCards } from "@/components/shared/StatCards"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -82,6 +85,12 @@ const REGLEMENT_LABELS: Record<string, string> = {
 
 export default function FacturationPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "facturation:read", permissions)
+  const canManage = canDo(role, "facturation:manage", permissions)
+
   const [factures, setFactures] = useState<Facture[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -116,6 +125,10 @@ export default function FacturationPage() {
   }
 
   const fetchFactures = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch("/api/facturation")
@@ -128,7 +141,7 @@ export default function FacturationPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [canRead])
 
   useEffect(() => {
     fetchFactures()
@@ -216,17 +229,9 @@ export default function FacturationPage() {
   }
 
   return (
-    <RoleGate
-      roles={["MANAGER"]}
-      fallback={
-        <div className="flex flex-col items-center justify-center py-24 text-slate-500 gap-2">
-          <Receipt className="h-8 w-8" />
-          <p className="text-sm">Accès réservé aux managers</p>
-        </div>
-      }
-    >
       <div className="space-y-6">
         <PageHeader title="Facturation" description="Gestion des factures">
+          <RoleGate action="facturation:manage">
           <Dialog
             open={createOpen}
             onOpenChange={(open) => {
@@ -434,8 +439,19 @@ export default function FacturationPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </RoleGate>
         </PageHeader>
 
+        {!canRead && canManage && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+            <p className="text-sm font-semibold text-blue-900">Mode création uniquement</p>
+            <p className="text-xs text-blue-700 mt-1">
+              Vous pouvez créer de nouvelles factures via le bouton « Nouvelle facture ». La consultation des factures ne vous est pas accessible.
+            </p>
+          </div>
+        )}
+
+        {canRead && (<>
         {/* Stats KPI */}
         <StatCards
           cards={[
@@ -544,7 +560,7 @@ export default function FacturationPage() {
             )}
           </CardContent>
         </Card>
+        </>)}
       </div>
-    </RoleGate>
   )
 }

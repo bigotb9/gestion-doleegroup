@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -84,6 +87,12 @@ const STATUT_BADGE = {
 }
 
 export default function StockPage() {
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "stock:read", permissions)
+  const canManage = canDo(role, "stock:manage", permissions)
+
   const [receptions, setReceptions] = useState<Reception[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -105,6 +114,10 @@ export default function StockPage() {
   const [editSubmitting, setEditSubmitting] = useState(false)
 
   const fetchReceptions = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch("/api/stock/receptions")
@@ -119,7 +132,7 @@ export default function StockPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [canRead])
 
   useEffect(() => { fetchReceptions() }, [fetchReceptions])
 
@@ -239,13 +252,25 @@ export default function StockPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Stock" description="Suivi des réceptions par commande">
-        <RoleGate roles={["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"]}>
+        <RoleGate action="stock:manage">
           <Button onClick={openInitDialog} size="sm">
             <Plus className="h-4 w-4 mr-1.5" />
             Nouvelle réception
           </Button>
         </RoleGate>
       </PageHeader>
+
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode gestion uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez initialiser de nouvelles réceptions via le bouton « Nouvelle réception ». La consultation des réceptions ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (<>
+
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -401,7 +426,7 @@ export default function StockPage() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <RoleGate roles={["MANAGER", "SECRETAIRE", "CHARGE_OPERATIONS"]}>
+                                <RoleGate action="stock:manage">
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -452,6 +477,7 @@ export default function StockPage() {
           })}
         </div>
       )}
+      </>)}
 
       {/* Dialog — Initialiser réceptions */}
       <Dialog open={initOpen} onOpenChange={setInitOpen}>

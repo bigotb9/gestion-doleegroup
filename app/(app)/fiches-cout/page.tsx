@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { RoleGate } from "@/components/shared/RoleGate"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -89,6 +92,12 @@ const EMPTY_FORM: FormState = {
 
 export default function FichesCoutPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  const canRead = canDo(role, "production:read", permissions)
+  const canManage = canDo(role, "production:manage", permissions)
+
   const [fiches, setFiches] = useState<FicheCout[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -110,6 +119,10 @@ export default function FichesCoutPage() {
   const isAutreSelected = form.categorie === SENTINEL_AUTRE
 
   const fetchFiches = useCallback(async () => {
+    if (!canRead) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch("/api/fiches-cout")
@@ -120,7 +133,7 @@ export default function FichesCoutPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [canRead])
 
   useEffect(() => { fetchFiches() }, [fetchFiches])
 
@@ -239,7 +252,7 @@ export default function FichesCoutPage() {
         title="Fiches de coût produit"
         description={`${fiches.length} fiche${fiches.length !== 1 ? "s" : ""} enregistrée${fiches.length !== 1 ? "s" : ""}`}
       >
-        <RoleGate roles={["MANAGER", "SECRETAIRE"]}>
+        <RoleGate action="production:manage">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetDialog() }}>
             <DialogTrigger render={<Button size="sm" />}>
               <Plus className="h-4 w-4 mr-1.5" />Ajouter une fiche
@@ -378,6 +391,16 @@ export default function FichesCoutPage() {
         </RoleGate>
       </PageHeader>
 
+      {!canRead && canManage && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+          <p className="text-sm font-semibold text-blue-900">Mode création uniquement</p>
+          <p className="text-xs text-blue-700 mt-1">
+            Vous pouvez créer de nouvelles fiches de coût via le bouton « Nouvelle fiche ». La consultation du catalogue ne vous est pas accessible.
+          </p>
+        </div>
+      )}
+
+      {canRead && (<>
       {/* ── Barre de recherche ──────────────────────────────────── */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -545,6 +568,7 @@ export default function FichesCoutPage() {
           })}
         </div>
       )}
+      </>)}
     </div>
   )
 }
