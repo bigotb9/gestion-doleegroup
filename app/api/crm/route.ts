@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
+  console.log("[/api/crm GET] received")
   const { error } = await requirePermission("crm:read")
   if (error) return error
 
@@ -62,8 +65,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log("[/api/crm POST] received - checking crm:create permission")
   const { error } = await requirePermission("crm:create")
-  if (error) return error
+  if (error) {
+    console.log("[/api/crm POST] BLOCKED by requirePermission")
+    return error
+  }
+  console.log("[/api/crm POST] ALLOWED - creating client")
 
   const body = await req.json()
 

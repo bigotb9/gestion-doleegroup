@@ -47,7 +47,8 @@
       "Bash(git commit -m 'feat: bouton supprimer sur page detail facture proforma \\(MANAGER + BROUILLON\\) *)",
       "Bash(git commit -m 'fix: PDF devis - supprimer titre tableau, corriger alignement conditions paiement *)",
       "Bash(git commit -m 'fix: journal audit - logAudit sur toutes les routes critiques *)",
-      "Bash(git commit -m 'feat: fiches de cout - categorie Autre personnalisee + filtre intelligent *)"
+      "Bash(git commit -m 'feat: fiches de cout - categorie Autre personnalisee + filtre intelligent *)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\bigot\\Documents\\dolee-group\\app\\api\\livraisons\\[id]",

@@ -46,16 +46,23 @@ export async function requireAuth(allowedRoles?: Role[]) {
 export async function requirePermission(action: Action) {
   const session = await auth()
   if (!session?.user?.id) {
+    console.log(`[requirePermission] action=${action} → 401 (no session)`)
     return { error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }), session: null }
   }
 
   const up = await fetchUserPermissions(session.user.id)
   if (!up) {
+    console.log(`[requirePermission] action=${action} userId=${session.user.id} → 401 (user not found or inactive)`)
     return { error: NextResponse.json({ error: "Accès refusé" }, { status: 401 }), session: null }
   }
 
-  if (!canDo(up.role, action, up.permissions)) {
-    return { error: NextResponse.json({ error: "Permission insuffisante" }, { status: 403 }), session: null }
+  const allowed = canDo(up.role, action, up.permissions)
+  console.log(
+    `[requirePermission] userId=${session.user.id} role=${up.role} action=${action} → ${allowed ? "ALLOW" : "DENY"} (perms=${JSON.stringify(up.permissions)})`
+  )
+
+  if (!allowed) {
+    return { error: NextResponse.json({ error: "Permission insuffisante", debug: { role: up.role, action, perms: up.permissions } }, { status: 403 }), session: null }
   }
 
   return { error: null, session }
