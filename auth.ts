@@ -63,7 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               permissions: true,
               isActive: true,
               avatarUrl: true,
-              customRole: { select: { permissions: true } },
+              customRole: { select: { name: true, permissions: true } },
             },
           })
           if (dbUser) {
@@ -72,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             session.user.id = token.id
             session.user.role = dbUser.role
             session.user.image = dbUser.avatarUrl ?? token.image ?? null
+            session.user.customRoleName = dbUser.customRole?.name ?? null
             // Rôle CUSTOM → user.permissions en priorité (override individuel), sinon customRole
             if (dbUser.role === "CUSTOM" && dbUser.customRole) {
               const raw = dbUser.permissions ?? dbUser.customRole.permissions
@@ -90,6 +91,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           session.user.role = token.role
           session.user.image = token.image ?? null
           session.user.permissions = token.permissions ?? null
+          session.user.customRoleName = null
         }
       }
       return session

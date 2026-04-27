@@ -117,6 +117,10 @@ export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
 
   const initials = (session?.user?.name ?? "??").slice(0, 2).toUpperCase()
   const avatarUrl = session?.user?.image
+  const customRoleName = session?.user?.customRoleName
+  const roleLabel = role === "CUSTOM" && customRoleName
+    ? customRoleName
+    : ROLE_LABELS[role ?? ""] ?? role
 
   return (
     <aside
@@ -204,7 +208,7 @@ export function AppSidebar({ onClose }: { onClose?: () => void } = {}) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">{session.user.name}</p>
               <p className="text-xs truncate" style={{ color: "#D4AF37" }}>
-                {ROLE_LABELS[role ?? ""] ?? role}
+                {roleLabel}
               </p>
             </div>
           </div>
