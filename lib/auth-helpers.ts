@@ -2,44 +2,72 @@ import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 import { Role } from "@prisma/client"
 import { canDo, type Action } from "@/lib/permissions"
+import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
 
-export async function requireAuth(allowedRoles?: Role[]) {
-  const session = await auth()
+// Fetch user permissions directly from DB — bypasses session/JWT entirely
+async function fetchUserPermissions(userId: string) {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      permissions: true,
+      isActive: true,
+      customRole: { select: { permissions: true } },
+    },
+  })
+  if (!u || !u.isActive) return null
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }),
-      session: null,
-    }
+  let perms: string[] | null = null
+  if (u.role === "CUSTOM" && u.customRole) {
+    // Individual user.permissions takes priority over the shared custom role
+    const raw = u.permissions ?? u.customRole.permissions
+    try { perms = JSON.parse(raw) } catch { perms = null }
+  } else if (u.permissions) {
+    try { perms = JSON.parse(u.permissions) } catch { perms = null }
   }
 
+  return { role: u.role as Role, permissions: perms }
+}
+
+// For API route handlers: keeps backward-compat role check
+export async function requireAuth(allowedRoles?: Role[]) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }), session: null }
+  }
   if (allowedRoles && !allowedRoles.includes(session.user.role as Role)) {
-    return {
-      error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }),
-      session: null,
-    }
+    return { error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }), session: null }
+  }
+  return { error: null, session }
+}
+
+// For API route handlers: checks granular permissions via fresh DB query
+export async function requirePermission(action: Action) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }), session: null }
+  }
+
+  const up = await fetchUserPermissions(session.user.id)
+  if (!up) {
+    return { error: NextResponse.json({ error: "Accès refusé" }, { status: 401 }), session: null }
+  }
+
+  if (!canDo(up.role, action, up.permissions)) {
+    return { error: NextResponse.json({ error: "Permission insuffisante" }, { status: 403 }), session: null }
   }
 
   return { error: null, session }
 }
 
-export async function requirePermission(action: Action) {
+// For server component layouts: redirects if permission missing
+export async function requirePagePermission(action: Action, fallback = "/dashboard") {
   const session = await auth()
+  if (!session?.user?.id) redirect("/login")
 
-  if (!session?.user?.id) {
-    return {
-      error: NextResponse.json({ error: "Non authentifié" }, { status: 401 }),
-      session: null,
-    }
-  }
+  const up = await fetchUserPermissions(session.user.id)
+  if (!up) redirect("/login")
 
-  const permissions = (session.user.permissions ?? null) as string[] | null
-  if (!canDo(session.user.role as Role, action, permissions)) {
-    return {
-      error: NextResponse.json({ error: "Permission insuffisante" }, { status: 403 }),
-      session: null,
-    }
-  }
-
-  return { error: null, session }
+  if (!canDo(up.role, action, up.permissions)) redirect(fallback)
 }
