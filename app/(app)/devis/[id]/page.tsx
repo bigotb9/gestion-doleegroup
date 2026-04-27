@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   Building2,
   CreditCard,
+  Trash2,
 } from "lucide-react"
 type DevisStatus = "BROUILLON" | "EN_ATTENTE_VALIDATION" | "VALIDE" | "ENVOYE" | "ACCEPTE" | "REFUSE" | "EXPIRE"
 type Currency = "EUR" | "USD" | "CFA"
@@ -94,12 +95,14 @@ type DevisDetail = {
 
 export default function DevisDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   const { data: session } = useSession()
   const role = session?.user?.role as Role | undefined
 
   const [devis, setDevis] = useState<DevisDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchDevis = useCallback(async () => {
     setLoading(true)
@@ -117,6 +120,24 @@ export default function DevisDetailPage() {
   useEffect(() => {
     fetchDevis()
   }, [fetchDevis])
+
+  // ── Delete ────────────────────────────────────────────────
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/devis/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? "Suppression impossible")
+      }
+      toast.success("Facture proforma supprimée")
+      router.push("/devis")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la suppression")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   // ── Action helper ─────────────────────────────────────────
   async function runAction(endpoint: string, actionKey: string, successMsg: string) {
@@ -170,6 +191,7 @@ export default function DevisDetailPage() {
   const sym = currencySymbol(devis.devise)
   const paymentModeLabel = devis.conditionsPaiement ?? "—"
 
+  const canDelete = devis.status === "BROUILLON" && role === "MANAGER"
   const canEdit = devis.status === "BROUILLON" && canDo(role, "devis:edit")
   const canValidate =
     ["BROUILLON", "EN_ATTENTE_VALIDATION"].includes(devis.status) &&
@@ -220,6 +242,31 @@ export default function DevisDetailPage() {
               <Edit className="h-4 w-4" />
               Modifier
             </Link>
+          )}
+
+          {/* Delete: BROUILLON + MANAGER only */}
+          {canDelete && (
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={deleting}
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                >
+                  {deleting ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-1.5" />
+                  )}
+                  Supprimer
+                </Button>
+              }
+              title="Supprimer la facture proforma"
+              description={`Vous êtes sur le point de supprimer définitivement la facture proforma ${devis.numero}. Cette action est irréversible.`}
+              confirmLabel="Supprimer définitivement"
+              onConfirm={handleDelete}
+            />
           )}
 
           {/* SECRETAIRE: soumettre à validation (BROUILLON → EN_ATTENTE_VALIDATION) */}
