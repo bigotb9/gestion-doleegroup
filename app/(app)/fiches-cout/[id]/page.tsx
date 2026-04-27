@@ -29,9 +29,10 @@ import {
   Trash2,
   Upload,
   X,
+  Tag,
 } from "lucide-react"
 
-const CATEGORIES = [
+const BASE_CATEGORIES = [
   "Stylos & Écriture",
   "Mugs & Tasses",
   "Textile",
@@ -39,8 +40,8 @@ const CATEGORIES = [
   "Papeterie",
   "Sacs & Bagagerie",
   "Goodies",
-  "Autre",
 ]
+const SENTINEL_AUTRE = "__autre__"
 
 type FicheCout = {
   id: string
@@ -75,6 +76,7 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [allCategories, setAllCategories] = useState<string[]>([])
 
   const [form, setForm] = useState<FormState>({
     categorie: "",
@@ -85,6 +87,11 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
     fraisDedouanement: "0",
     prixVente: "",
   })
+  const [autreCategorie, setAutreCategorie] = useState("")
+  const isAutreSelected = form.categorie === SENTINEL_AUTRE
+
+  // Catégories custom de la DB non présentes dans BASE_CATEGORIES
+  const customCategoriesFromDB = allCategories.filter((c) => !BASE_CATEGORIES.includes(c))
 
   // Image upload
   const imgInputRef = useRef<HTMLInputElement>(null)
@@ -95,16 +102,28 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
     (Number(form.coutUnitaire) || 0) + (Number(form.fraisDedouanement) || 0)
 
   useEffect(() => {
-    async function fetchFiche() {
+    async function fetchData() {
       setLoading(true)
       try {
-        const res = await fetch(`/api/fiches-cout/${id}`)
-        if (!res.ok) throw new Error()
-        const data: FicheCout = await res.json()
+        const [ficheRes, allRes] = await Promise.all([
+          fetch(`/api/fiches-cout/${id}`),
+          fetch("/api/fiches-cout"),
+        ])
+        if (!ficheRes.ok) throw new Error()
+        const data: FicheCout = await ficheRes.json()
         setFiche(data)
         setImageUrl(data.imageUrl)
+
+        // Charger toutes les catégories existantes pour le sélecteur
+        if (allRes.ok) {
+          const all: FicheCout[] = await allRes.json()
+          setAllCategories([...new Set(all.map((f) => f.categorie).filter(Boolean))].sort())
+        }
+
+        // Si la catégorie n'est pas dans la liste standard → mode "Autre"
+        const isCustom = !BASE_CATEGORIES.includes(data.categorie)
         setForm({
-          categorie: data.categorie,
+          categorie: isCustom ? SENTINEL_AUTRE : data.categorie,
           nom: data.nom,
           fournisseur: data.fournisseur,
           contactFournisseur: data.contactFournisseur ?? "",
@@ -112,6 +131,7 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
           fraisDedouanement: String(Number(data.fraisDedouanement)),
           prixVente: data.prixVente != null ? String(Number(data.prixVente)) : "",
         })
+        if (isCustom) setAutreCategorie(data.categorie)
       } catch {
         toast.error("Fiche introuvable")
         router.push("/fiches-cout")
@@ -119,7 +139,7 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
         setLoading(false)
       }
     }
-    fetchFiche()
+    fetchData()
   }, [id, router])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -145,7 +165,11 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
   }
 
   async function handleSave() {
-    if (!form.categorie) { toast.error("La catégorie est requise"); return }
+    const categorieFinale = isAutreSelected ? autreCategorie.trim() : form.categorie
+    if (!categorieFinale) {
+      toast.error(isAutreSelected ? "Veuillez saisir le nom de la catégorie" : "La catégorie est requise")
+      return
+    }
     if (!form.nom.trim()) { toast.error("Le nom est requis"); return }
     if (!form.fournisseur.trim()) { toast.error("Le fournisseur est requis"); return }
     if (!form.coutUnitaire || isNaN(Number(form.coutUnitaire))) {
@@ -158,7 +182,7 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          categorie: form.categorie,
+          categorie: categorieFinale,
           nom: form.nom.trim(),
           fournisseur: form.fournisseur.trim(),
           contactFournisseur: form.contactFournisseur.trim() || null,
@@ -194,8 +218,9 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
   function cancelEdit() {
     if (!fiche) return
     setImageUrl(fiche.imageUrl)
+    const isCustom = !BASE_CATEGORIES.includes(fiche.categorie)
     setForm({
-      categorie: fiche.categorie,
+      categorie: isCustom ? SENTINEL_AUTRE : fiche.categorie,
       nom: fiche.nom,
       fournisseur: fiche.fournisseur,
       contactFournisseur: fiche.contactFournisseur ?? "",
@@ -203,6 +228,7 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
       fraisDedouanement: String(Number(fiche.fraisDedouanement)),
       prixVente: fiche.prixVente != null ? String(Number(fiche.prixVente)) : "",
     })
+    if (isCustom) setAutreCategorie(fiche.categorie)
     setEditing(false)
   }
 
@@ -337,17 +363,45 @@ export default function FicheCoutDetailPage({ params }: { params: Promise<{ id: 
               <Label>Catégorie <span className="text-red-500">*</span></Label>
               <Select
                 value={form.categorie}
-                onValueChange={(v) => setForm((f) => ({ ...f, categorie: v ?? "" }))}
+                onValueChange={(v) => {
+                  setForm((f) => ({ ...f, categorie: v ?? "" }))
+                  if (v !== SENTINEL_AUTRE) setAutreCategorie("")
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Standards</div>
+                  {BASE_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
+                  {customCategoriesFromDB.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-t mt-1 pt-2">Personnalisées</div>
+                      {customCategoriesFromDB.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </>
+                  )}
+                  <div className="border-t mt-1 pt-1">
+                    <SelectItem value={SENTINEL_AUTRE}>
+                      <span className="flex items-center gap-1.5 text-slate-500 italic">
+                        <Tag className="h-3.5 w-3.5" />Autre (nouvelle catégorie)...
+                      </span>
+                    </SelectItem>
+                  </div>
                 </SelectContent>
               </Select>
+              {isAutreSelected && (
+                <Input
+                  autoFocus
+                  value={autreCategorie}
+                  onChange={(e) => setAutreCategorie(e.target.value)}
+                  placeholder="Nom de la nouvelle catégorie..."
+                  className="border-blue-300 focus-visible:ring-blue-400"
+                />
+              )}
             </div>
 
             {/* Nom */}
