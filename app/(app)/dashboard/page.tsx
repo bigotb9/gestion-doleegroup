@@ -1,5 +1,8 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { canDo } from "@/lib/permissions"
+import { Role } from "@prisma/client"
 import Link from "next/link"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { DashboardCharts } from "@/components/shared/DashboardCharts"
@@ -46,7 +49,12 @@ type LivraisonRow = {
 }
 
 export default async function DashboardPage() {
-  await auth()
+  const session = await auth()
+  const role = session?.user?.role as Role | undefined
+  const permissions = (session?.user?.permissions ?? null) as string[] | null
+  if (!canDo(role, "dashboard:read", permissions)) {
+    redirect("/commandes")
+  }
 
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

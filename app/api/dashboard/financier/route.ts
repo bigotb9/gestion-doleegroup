@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const { error } = await requirePermission("facturation:manage")
+  const { error } = await requirePermission("dashboard:read")
   if (error) return error
 
   const now = new Date()

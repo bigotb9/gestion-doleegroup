@@ -72,10 +72,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             session.user.id = token.id
             session.user.role = dbUser.role
             session.user.image = dbUser.avatarUrl ?? token.image ?? null
-            // Rôle CUSTOM → permissions viennent de la table CustomRole
+            // Rôle CUSTOM → user.permissions en priorité (override individuel), sinon customRole
             if (dbUser.role === "CUSTOM" && dbUser.customRole) {
+              const raw = dbUser.permissions ?? dbUser.customRole.permissions
               try {
-                session.user.permissions = JSON.parse(dbUser.customRole.permissions)
+                session.user.permissions = JSON.parse(raw)
               } catch { session.user.permissions = null }
             } else {
               session.user.permissions = dbUser.permissions

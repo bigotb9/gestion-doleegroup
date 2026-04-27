@@ -18,6 +18,7 @@ export type Action =
   // Administration
   | "users:manage"
   | "audit:read"
+  | "dashboard:read"
 
 export const ALL_ACTIONS: Action[] = [
   "crm:read", "crm:create", "crm:edit", "crm:delete",
@@ -33,6 +34,7 @@ export const ALL_ACTIONS: Action[] = [
   "depense:read", "depense:manage",
   "users:manage",
   "audit:read",
+  "dashboard:read",
 ]
 
 // ── Groupes organisés par domaine métier ─────────────────────────────────
@@ -181,6 +183,12 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
           { action: "audit:read", label: "Consulter le journal" },
         ],
       },
+      {
+        label: "Interface", module: "interface",
+        actions: [
+          { action: "dashboard:read", label: "Voir le tableau de bord", hint: "Accès aux KPIs et statistiques globales" },
+        ],
+      },
     ],
   },
 ]
@@ -203,6 +211,7 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "livraison:read",
     "facturation:read",
     "depense:read",
+    "dashboard:read",
   ],
   CHARGE_OPERATIONS: [
     "crm:read",
@@ -216,6 +225,7 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "livraison:read", "livraison:manage", "livraison:sign",
     "facturation:read",
     "depense:read",
+    "dashboard:read",
   ],
   // CUSTOM : permissions dynamiques définies dans la table CustomRole
   CUSTOM: [],
