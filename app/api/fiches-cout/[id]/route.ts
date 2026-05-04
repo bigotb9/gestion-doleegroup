@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requirePermission("production:read")
+  const { error } = await requirePermission("fiche-cout:read")
   const { id } = await params
   if (error) return error
 
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requirePermission("production:manage")
+  const { error } = await requirePermission("fiche-cout:manage")
   const { id } = await params
   if (error) return error
 
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error } = await requirePermission("production:manage")
+  const { error } = await requirePermission("fiche-cout:manage")
   const { id } = await params
   if (error) return error
 

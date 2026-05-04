@@ -95,8 +95,8 @@ export default function FichesCoutPage() {
   const { data: session } = useSession()
   const role = session?.user?.role as Role | undefined
   const permissions = (session?.user?.permissions ?? null) as string[] | null
-  const canRead = canDo(role, "production:read", permissions)
-  const canManage = canDo(role, "production:manage", permissions)
+  const canRead = canDo(role, "fiche-cout:read", permissions)
+  const canManage = canDo(role, "fiche-cout:manage", permissions)
 
   const [fiches, setFiches] = useState<FicheCout[]>([])
   const [loading, setLoading] = useState(true)
@@ -252,7 +252,7 @@ export default function FichesCoutPage() {
         title="Fiches de coût produit"
         description={`${fiches.length} fiche${fiches.length !== 1 ? "s" : ""} enregistrée${fiches.length !== 1 ? "s" : ""}`}
       >
-        <RoleGate action="production:manage">
+        <RoleGate action="fiche-cout:manage">
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetDialog() }}>
             <DialogTrigger render={<Button size="sm" />}>
               <Plus className="h-4 w-4 mr-1.5" />Ajouter une fiche

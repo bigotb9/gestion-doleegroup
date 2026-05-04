@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth-helpers"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
-  const { error } = await requirePermission("production:read")
+  const { error } = await requirePermission("fiche-cout:read")
   if (error) return error
 
   const { searchParams } = new URL(req.url)
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = await requirePermission("production:manage")
+  const { error } = await requirePermission("fiche-cout:manage")
   if (error) return error
 
   const body = await req.json()

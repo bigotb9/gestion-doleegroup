@@ -7,6 +7,7 @@ export type Action =
   | "commande:read" | "commande:create" | "commande:confirm" | "commande:cancel"
   // Opérations
   | "production:read" | "production:manage"
+  | "fiche-cout:read" | "fiche-cout:manage"
   | "stock:read" | "stock:manage"
   | "logistique:read" | "logistique:manage"
   | "reconditionnement:read" | "reconditionnement:manage"
@@ -25,6 +26,7 @@ export const ALL_ACTIONS: Action[] = [
   "devis:read", "devis:create", "devis:edit", "devis:validate", "devis:send",
   "commande:read", "commande:create", "commande:confirm", "commande:cancel",
   "production:read", "production:manage",
+  "fiche-cout:read", "fiche-cout:manage",
   "stock:read", "stock:manage",
   "logistique:read", "logistique:manage",
   "reconditionnement:read", "reconditionnement:manage",
@@ -101,6 +103,13 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
         actions: [
           { action: "production:read", label: "Consulter" },
           { action: "production:manage", label: "Gérer", hint: "Créer, modifier les productions" },
+        ],
+      },
+      {
+        label: "Fiche de coût produit", module: "fiche-cout",
+        actions: [
+          { action: "fiche-cout:read", label: "Consulter", hint: "Voir le catalogue des fiches de coût" },
+          { action: "fiche-cout:manage", label: "Gérer", hint: "Créer, modifier, supprimer les fiches" },
         ],
       },
       {
@@ -205,6 +214,7 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "commande:read", "commande:create",
     "paiement:record",
     "production:read",
+    "fiche-cout:read",
     "logistique:read",
     "stock:read",
     "reconditionnement:read",
@@ -219,6 +229,7 @@ const ROLE_PERMISSIONS: Record<Role, Action[]> = {
     "commande:read",
     "paiement:record",
     "production:read",
+    "fiche-cout:read",
     "logistique:read", "logistique:manage",
     "stock:read", "stock:manage",
     "reconditionnement:read", "reconditionnement:manage",

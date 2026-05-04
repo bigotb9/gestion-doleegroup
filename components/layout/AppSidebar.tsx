@@ -54,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Livraisons", href: "/livraisons", icon: PackageCheck, actionAny: ["livraison:read", "livraison:manage"] },
   { label: "Facturation", href: "/facturation", icon: Receipt, actionAny: ["facturation:read", "facturation:manage"] },
   { label: "Dépenses", href: "/depenses", icon: TrendingDown, actionAny: ["depense:read", "depense:manage"] },
-  { label: "Fiche de coût produit", href: "/fiches-cout", icon: BookOpen, actionAny: ["production:read", "production:manage"] },
+  { label: "Fiche de coût produit", href: "/fiches-cout", icon: BookOpen, actionAny: ["fiche-cout:read", "fiche-cout:manage"] },
   { label: "Échéances", href: "/echeances", icon: CalendarClock, action: "commande:read" },
   { label: "Relances CRM", href: "/crm/relances", icon: Bell, action: "crm:read" },
   { label: "Exports CSV", href: "/export", icon: Download, action: "commande:read" },

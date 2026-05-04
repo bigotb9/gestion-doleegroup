@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth-helpers"
 import { supabaseAdmin, FICHES_COUT_BUCKET } from "@/lib/supabase"
 
 export async function POST(req: NextRequest) {
-  const { error } = await requirePermission("production:manage")
+  const { error } = await requirePermission("fiche-cout:manage")
   if (error) return error
 
   const formData = await req.formData()
