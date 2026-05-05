@@ -208,6 +208,13 @@ type RecuCaisseData = {
     ville: string | null
     pays: string
   }
+  contact: {
+    nom: string
+    prenom: string | null
+    poste: string | null
+    email: string | null
+    phone: string
+  } | null
   commande: {
     numero: string
     devise: string
@@ -285,15 +292,28 @@ export function RecuCaissePDF({ recu, logoDataUrl }: { recu: RecuCaisseData; log
           <View style={[styles.col, { marginRight: 20 }]}>
             <Text style={styles.sectionTitle}>Client</Text>
             <Text style={styles.valueBold}>{recu.client.raisonSociale}</Text>
-            <Text style={styles.value}>
-              {recu.client.contactNom}
-              {recu.client.contactPrenom ? ` ${recu.client.contactPrenom}` : ""}
-              {recu.client.contactPoste ? ` — ${recu.client.contactPoste}` : ""}
-            </Text>
-            {recu.client.contactEmail && (
-              <Text style={[styles.value, { color: colors.primary }]}>{recu.client.contactEmail}</Text>
-            )}
-            <Text style={styles.value}>{recu.client.contactPhone}</Text>
+            {(() => {
+              const c = recu.contact ?? {
+                nom: recu.client.contactNom,
+                prenom: recu.client.contactPrenom,
+                poste: recu.client.contactPoste,
+                email: recu.client.contactEmail,
+                phone: recu.client.contactPhone,
+              }
+              return (
+                <>
+                  <Text style={styles.value}>
+                    {c.nom}
+                    {c.prenom ? ` ${c.prenom}` : ""}
+                    {c.poste ? ` — ${c.poste}` : ""}
+                  </Text>
+                  {c.email && (
+                    <Text style={[styles.value, { color: colors.primary }]}>{c.email}</Text>
+                  )}
+                  <Text style={styles.value}>{c.phone}</Text>
+                </>
+              )
+            })()}
             {recu.client.adresse && <Text style={styles.value}>{recu.client.adresse}</Text>}
             <Text style={styles.value}>
               {recu.client.ville ? `${recu.client.ville}, ` : ""}{recu.client.pays}

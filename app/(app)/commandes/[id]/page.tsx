@@ -136,7 +136,17 @@ type CommandeDetail = {
     pays: string
     adresse: string | null
   }
-  devis: { id: string; numero: string } | null
+  devis: {
+    id: string
+    numero: string
+    contact: {
+      nom: string
+      prenom: string | null
+      poste: string | null
+      email: string | null
+      phone: string
+    } | null
+  } | null
   createdBy?: { name: string } | null
   lignes: LigneDetail[]
   paiements: Paiement[]
@@ -590,34 +600,47 @@ export default function CommandeDetailPage() {
                     {commande.client.raisonSociale}
                   </Link>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <User className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-slate-700">
-                      {commande.client.contactNom}
-                      {commande.client.contactPrenom ? ` ${commande.client.contactPrenom}` : ""}
-                    </p>
-                    {commande.client.contactPoste && (
-                      <p className="text-xs text-slate-400">{commande.client.contactPoste}</p>
-                    )}
-                  </div>
-                </div>
-                {commande.client.contactPhone && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                    <a href={`tel:${commande.client.contactPhone}`} className="text-blue-600 hover:underline">
-                      {commande.client.contactPhone}
-                    </a>
-                  </div>
-                )}
-                {commande.client.contactEmail && (
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="h-4 w-4 text-slate-400 shrink-0" />
-                    <a href={`mailto:${commande.client.contactEmail}`} className="text-blue-600 hover:underline truncate">
-                      {commande.client.contactEmail}
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  const c = commande.devis?.contact ?? {
+                    nom: commande.client.contactNom,
+                    prenom: commande.client.contactPrenom,
+                    poste: commande.client.contactPoste,
+                    email: commande.client.contactEmail,
+                    phone: commande.client.contactPhone,
+                  }
+                  return (
+                    <>
+                      <div className="flex items-start gap-2.5">
+                        <User className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-slate-700">
+                            {c.nom}
+                            {c.prenom ? ` ${c.prenom}` : ""}
+                          </p>
+                          {c.poste && (
+                            <p className="text-xs text-slate-400">{c.poste}</p>
+                          )}
+                        </div>
+                      </div>
+                      {c.phone && (
+                        <div className="flex items-center gap-2.5">
+                          <Phone className="h-4 w-4 text-slate-400 shrink-0" />
+                          <a href={`tel:${c.phone}`} className="text-blue-600 hover:underline">
+                            {c.phone}
+                          </a>
+                        </div>
+                      )}
+                      {c.email && (
+                        <div className="flex items-center gap-2.5">
+                          <Mail className="h-4 w-4 text-slate-400 shrink-0" />
+                          <a href={`mailto:${c.email}`} className="text-blue-600 hover:underline truncate">
+                            {c.email}
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
                 {(commande.client.ville || commande.client.adresse) && (
                   <div className="flex items-start gap-2.5">
                     <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />

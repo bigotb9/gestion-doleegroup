@@ -51,6 +51,8 @@ type Facture = {
       id: string
       raisonSociale: string
       contactNom: string
+      contactPrenom: string | null
+      contactPoste: string | null
       contactEmail: string | null
       contactPhone: string
       adresse: string | null
@@ -58,6 +60,15 @@ type Facture = {
       pays: string
     }
     paiements: { montant: string | number }[]
+    devis: {
+      contact: {
+        nom: string
+        prenom: string | null
+        poste: string | null
+        email: string | null
+        phone: string
+      } | null
+    } | null
   }
 }
 
@@ -410,17 +421,33 @@ export default function FactureDetailPage() {
                 {facture.commande.client.raisonSociale}
               </Link>
             </div>
-            <div>
-              <p className="text-slate-500">Contact</p>
-              <p>{facture.commande.client.contactNom}</p>
-              {facture.commande.client.contactEmail && (
-                <p className="text-xs text-slate-400">{facture.commande.client.contactEmail}</p>
-              )}
-            </div>
-            <div>
-              <p className="text-slate-500">Téléphone</p>
-              <p>{facture.commande.client.contactPhone}</p>
-            </div>
+            {(() => {
+              const c = facture.commande.devis?.contact ?? {
+                nom: facture.commande.client.contactNom,
+                prenom: facture.commande.client.contactPrenom,
+                poste: facture.commande.client.contactPoste,
+                email: facture.commande.client.contactEmail,
+                phone: facture.commande.client.contactPhone,
+              }
+              return (
+                <>
+                  <div>
+                    <p className="text-slate-500">Contact</p>
+                    <p>
+                      {c.nom}
+                      {c.prenom ? ` ${c.prenom}` : ""}
+                    </p>
+                    {c.email && (
+                      <p className="text-xs text-slate-400">{c.email}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Téléphone</p>
+                    <p>{c.phone}</p>
+                  </div>
+                </>
+              )
+            })()}
             {(facture.commande.client.adresse || facture.commande.client.ville) && (
               <div className="col-span-2">
                 <p className="text-slate-500">Adresse</p>

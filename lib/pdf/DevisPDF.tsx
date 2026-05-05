@@ -35,6 +35,13 @@ type DevisData = {
     ville: string | null
     pays: string
   }
+  contact: {
+    nom: string
+    prenom: string | null
+    poste: string | null
+    email: string | null
+    phone: string
+  } | null
   lignes: DevisLigne[]
   createdBy: { name: string }
 }
@@ -120,14 +127,27 @@ export function DevisPDF({ devis, logoDataUrl }: { devis: DevisData; logoDataUrl
           <View style={[styles.col, { marginRight: 20 }]}>
             <Text style={styles.sectionTitle}>Client</Text>
             <Text style={styles.valueBold}>{devis.client.raisonSociale}</Text>
-            <Text style={styles.value}>
-              {devis.client.contactNom}{devis.client.contactPrenom ? ` ${devis.client.contactPrenom}` : ""}
-              {devis.client.contactPoste ? ` — ${devis.client.contactPoste}` : ""}
-            </Text>
-            {devis.client.contactEmail && (
-              <Text style={[styles.value, { color: colors.primary }]}>{devis.client.contactEmail}</Text>
-            )}
-            <Text style={styles.value}>{devis.client.contactPhone}</Text>
+            {(() => {
+              const c = devis.contact ?? {
+                nom: devis.client.contactNom,
+                prenom: devis.client.contactPrenom,
+                poste: devis.client.contactPoste,
+                email: devis.client.contactEmail,
+                phone: devis.client.contactPhone,
+              }
+              return (
+                <>
+                  <Text style={styles.value}>
+                    {c.nom}{c.prenom ? ` ${c.prenom}` : ""}
+                    {c.poste ? ` — ${c.poste}` : ""}
+                  </Text>
+                  {c.email && (
+                    <Text style={[styles.value, { color: colors.primary }]}>{c.email}</Text>
+                  )}
+                  <Text style={styles.value}>{c.phone}</Text>
+                </>
+              )
+            })()}
             {devis.client.adresse && <Text style={styles.value}>{devis.client.adresse}</Text>}
             <Text style={styles.value}>
               {devis.client.ville ? `${devis.client.ville}, ` : ""}{devis.client.pays}

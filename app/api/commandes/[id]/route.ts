@@ -31,7 +31,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
       factures: { orderBy: { createdAt: "desc" } },
       confirmedBy: { select: { id: true, name: true } },
-      devis: { select: { id: true, numero: true } },
+      devis: {
+        select: {
+          id: true,
+          numero: true,
+          contact: {
+            select: {
+              nom: true,
+              prenom: true,
+              poste: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      },
     },
   })
 

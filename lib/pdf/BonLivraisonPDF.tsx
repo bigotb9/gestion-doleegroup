@@ -31,11 +31,19 @@ type LivraisonData = {
   client: {
     raisonSociale: string
     contactNom: string
+    contactPrenom: string | null
     contactPhone: string
     adresse: string | null
     ville: string | null
     pays: string
   }
+  contact: {
+    nom: string
+    prenom: string | null
+    poste: string | null
+    email: string | null
+    phone: string
+  } | null
   commande: { numero: string }
 }
 
@@ -102,7 +110,17 @@ export function BonLivraisonPDF({
           <View style={[styles.col, { marginRight: 20 }]}>
             <Text style={styles.sectionTitle}>Destinataire</Text>
             <Text style={styles.valueBold}>{livraison.client.raisonSociale}</Text>
-            <Text style={styles.value}>{livraison.client.contactNom} — {livraison.client.contactPhone}</Text>
+            {(() => {
+              const c = livraison.contact ?? {
+                nom: livraison.client.contactNom,
+                prenom: livraison.client.contactPrenom,
+                phone: livraison.client.contactPhone,
+              }
+              const fullName = `${c.nom}${c.prenom ? ` ${c.prenom}` : ""}`
+              return (
+                <Text style={styles.value}>{fullName} — {c.phone}</Text>
+              )
+            })()}
             {livraison.client.adresse && <Text style={styles.value}>{livraison.client.adresse}</Text>}
             <Text style={styles.value}>
               {livraison.client.ville ? `${livraison.client.ville}, ` : ""}{livraison.client.pays}

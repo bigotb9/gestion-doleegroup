@@ -20,6 +20,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           client: true,
           lignes: { orderBy: { ordre: "asc" } },
           paiements: { where: { isConfirmed: true }, select: { montant: true } },
+          devis: {
+            select: {
+              contact: {
+                select: {
+                  nom: true,
+                  prenom: true,
+                  poste: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       },
     },

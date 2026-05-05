@@ -36,6 +36,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
               pays: true,
             },
           },
+          devis: {
+            select: {
+              contact: {
+                select: {
+                  nom: true,
+                  prenom: true,
+                  poste: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -94,6 +107,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       soldeRestant: montantAvanceVerse > 0 ? soldeRestant : null,
       notes: null,
       client: facture.commande.client,
+      contact: facture.commande.devis?.contact ?? null,
       commande: {
         numero: facture.commande.numero,
         devise: facture.commande.devise,

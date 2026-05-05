@@ -83,6 +83,13 @@ type DevisDetail = {
     pays: string
     adresse: string | null
   }
+  contact: {
+    nom: string
+    prenom: string | null
+    poste: string | null
+    email: string | null
+    phone: string
+  } | null
   createdBy: { id: string; name: string }
   validatedBy: { id: string; name: string } | null
   lignes: LigneDetail[]
@@ -471,40 +478,53 @@ export default function DevisDetailPage() {
                   </Link>
                 </div>
               </div>
-              <div className="flex items-start gap-2.5">
-                <User className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-slate-700">
-                    {devis.client.contactNom}
-                    {devis.client.contactPrenom ? ` ${devis.client.contactPrenom}` : ""}
-                  </p>
-                  {devis.client.contactPoste && (
-                    <p className="text-xs text-slate-400">{devis.client.contactPoste}</p>
-                  )}
-                </div>
-              </div>
-              {devis.client.contactPhone && (
-                <div className="flex items-center gap-2.5">
-                  <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                  <a
-                    href={`tel:${devis.client.contactPhone}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {devis.client.contactPhone}
-                  </a>
-                </div>
-              )}
-              {devis.client.contactEmail && (
-                <div className="flex items-center gap-2.5">
-                  <Mail className="h-4 w-4 text-slate-400 shrink-0" />
-                  <a
-                    href={`mailto:${devis.client.contactEmail}`}
-                    className="text-blue-600 hover:underline truncate"
-                  >
-                    {devis.client.contactEmail}
-                  </a>
-                </div>
-              )}
+              {(() => {
+                const c = devis.contact ?? {
+                  nom: devis.client.contactNom,
+                  prenom: devis.client.contactPrenom,
+                  poste: devis.client.contactPoste,
+                  email: devis.client.contactEmail,
+                  phone: devis.client.contactPhone,
+                }
+                return (
+                  <>
+                    <div className="flex items-start gap-2.5">
+                      <User className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-slate-700">
+                          {c.nom}
+                          {c.prenom ? ` ${c.prenom}` : ""}
+                        </p>
+                        {c.poste && (
+                          <p className="text-xs text-slate-400">{c.poste}</p>
+                        )}
+                      </div>
+                    </div>
+                    {c.phone && (
+                      <div className="flex items-center gap-2.5">
+                        <Phone className="h-4 w-4 text-slate-400 shrink-0" />
+                        <a
+                          href={`tel:${c.phone}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {c.phone}
+                        </a>
+                      </div>
+                    )}
+                    {c.email && (
+                      <div className="flex items-center gap-2.5">
+                        <Mail className="h-4 w-4 text-slate-400 shrink-0" />
+                        <a
+                          href={`mailto:${c.email}`}
+                          className="text-blue-600 hover:underline truncate"
+                        >
+                          {c.email}
+                        </a>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
               {(devis.client.ville || devis.client.adresse) && (
                 <div className="flex items-start gap-2.5">
                   <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />

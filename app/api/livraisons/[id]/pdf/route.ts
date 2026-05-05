@@ -20,6 +20,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           id: true,
           numero: true,
           lignes: { orderBy: { ordre: "asc" } },
+          devis: {
+            select: {
+              contact: {
+                select: {
+                  nom: true,
+                  prenom: true,
+                  poste: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -89,6 +102,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       signatureChargeDate: livraison.signatureChargeDate?.toISOString() ?? null,
       lignesLivraison,
       commande: { numero: livraison.commande.numero },
+      contact: livraison.commande.devis?.contact ?? null,
     }
 
     const { renderToBuffer } = await import("@react-pdf/renderer")

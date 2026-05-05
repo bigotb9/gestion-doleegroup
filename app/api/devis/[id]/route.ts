@@ -13,6 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     include: {
       lignes: { include: { produit: true }, orderBy: { ordre: "asc" } },
       client: true,
+      contact: true,
       createdBy: { select: { id: true, name: true } },
       validatedBy: { select: { id: true, name: true } },
       commandes: { select: { id: true, numero: true }, take: 1 },
