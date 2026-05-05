@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -42,6 +42,14 @@ type ClientOption = {
   contactNom: string
   contactPrenom: string | null
   ville: string | null
+}
+
+type ContactOption = {
+  id: string
+  nom: string
+  prenom: string | null
+  poste: string | null
+  phone: string
 }
 
 type LigneRow = {
@@ -91,7 +99,12 @@ export default function EditDevisPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [debouncedClientSearch, setDebouncedClientSearch] = useState("")
 
+  // Contacts du client sélectionné
+  const [contacts, setContacts] = useState<ContactOption[]>([])
+  const [selectedContactId, setSelectedContactId] = useState<string>("")
+
   // Section 2 — infos
+  const [projet, setProjet] = useState("")
   const [dateValidite, setDateValidite] = useState("")
   const [devise, setDevise] = useState<Currency>("CFA")
   const [notes, setNotes] = useState("")
@@ -128,11 +141,22 @@ export default function EditDevisPage() {
           ville: data.client.ville,
         })
 
+        // Charge les contacts du client et pré-sélectionne celui du devis
+        try {
+          const ctRes = await fetch(`/api/crm/${data.client.id}/contacts`)
+          if (ctRes.ok) {
+            const ctData: ContactOption[] = await ctRes.json()
+            setContacts(ctData)
+          }
+        } catch { /* ignore */ }
+        setSelectedContactId(data.contactId ?? "")
+
         // dateValidite: format to yyyy-mm-dd for input[type=date]
         const dvDate = new Date(data.dateValidite)
         setDateValidite(dvDate.toISOString().split("T")[0])
 
         setDevise(data.devise as Currency)
+        setProjet(data.projet ?? "")
         setNotes(data.notes ?? "")
         setDelaiLivraison(data.delaiLivraison ?? "")
         // Détecte si conditions structurées (JSON) ou texte libre
@@ -210,6 +234,31 @@ export default function EditDevisPage() {
     }
   }, [fetchClients, dropdownOpen, debouncedClientSearch])
 
+  // ── Refetch contacts when client changes (after initial load) ─
+  const initialClientIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    const clientId = selectedClient?.id
+    if (!clientId) {
+      setContacts([])
+      setSelectedContactId("")
+      return
+    }
+    if (initialClientIdRef.current === null) {
+      initialClientIdRef.current = clientId
+      return
+    }
+    if (initialClientIdRef.current === clientId) return
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/crm/${clientId}/contacts`)
+        if (!res.ok) return
+        const data: ContactOption[] = await res.json()
+        setContacts(data)
+        setSelectedContactId("")
+      } catch { setContacts([]) }
+    })()
+  }, [selectedClient?.id])
+
   // ── Derived totals ────────────────────────────────────────
   const sousTotal = lignes.reduce((acc, l) => acc + ligneTotal(l), 0)
   const totalTTC = sousTotal + taxe
@@ -254,6 +303,8 @@ export default function EditDevisPage() {
     try {
       const body = {
         clientId: selectedClient.id,
+        contactId: selectedContactId || null,
+        projet: projet.trim() || null,
         dateValidite,
         devise,
         notes: notes.trim() || null,
@@ -445,6 +496,34 @@ export default function EditDevisPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="projet">Projet</Label>
+              <Input
+                id="projet"
+                value={projet}
+                onChange={(e) => setProjet(e.target.value)}
+                placeholder="Nom ou référence du projet (optionnel)"
+              />
+            </div>
+
+            {contacts.length > 0 && (
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="contact">Contact du prospect</Label>
+                <Select value={selectedContactId} onValueChange={(v) => setSelectedContactId(v ?? "")}>
+                  <SelectTrigger id="contact">
+                    <SelectValue placeholder="Sélectionner un contact (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contacts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nom}{c.prenom ? ` ${c.prenom}` : ""}{c.poste ? ` — ${c.poste}` : ""} · {c.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label htmlFor="dateValidite">
                 Date de validité <span className="text-red-500">*</span>
